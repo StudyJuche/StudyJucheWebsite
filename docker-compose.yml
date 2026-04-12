@@ -1,4 +1,4 @@
-Wservices:
+services:
   backend:
     build:
       context: ./backend
@@ -28,7 +28,8 @@ Wservices:
   caddy:
     image: caddy:2
     ports:
-      - "8080:8080"
+      - "80:80"
+      - "443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
@@ -36,8 +37,24 @@ Wservices:
     depends_on:
       - frontend
       - backend
+      - ghost
+
+  ghost:
+    image: ghost:5-alpine
+    restart: always
+    environment:
+      # We use SQLite for easy development, but you might want to configure Postgres for production
+      database__client: sqlite3
+      database__connection__filename: content/data/ghost.db
+      database__useNullAsDefault: "true"
+      database__debug: "false"
+      # URL needs to match the host:port that will be accessing the CMS
+      url: https://ghost.juche.study # Change this to your production URL if applicable
+    volumes:
+      - ghost_data:/var/lib/ghost/content
 
 volumes:
   postgres_data:
   caddy_data:
   caddy_config:
+  ghost_data:

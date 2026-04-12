@@ -66,7 +66,7 @@ export const CourseLessonDetail = () => {
 
   if (loading) {
     return (
-      <div className="pt-20">
+      <div className="pt-20 bg-site-tile bg-repeat bg-auto min-h-screen">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-red-800 mx-auto mt-20"></div>
       </div>
     );
@@ -80,7 +80,7 @@ export const CourseLessonDetail = () => {
   const isLastLesson = currentIndex === lessons.length - 1;
 
   return (
-    <div className="pt-20 pb-20">
+    <div className="pt-20 pb-20 bg-site-tile bg-repeat bg-auto min-h-screen">
       <div className={`max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden mt-12`}>
         <div className="p-8 md:p-12">
           <div className="mb-8 pb-8 border-b border-gray-200">

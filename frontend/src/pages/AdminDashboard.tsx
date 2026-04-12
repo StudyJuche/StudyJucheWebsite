@@ -217,11 +217,11 @@ export const AdminDashboard = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto mt-10 p-8 bg-white rounded-lg shadow-md">
+    <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
       {notification && <Notification message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
       <h1 className="text-4xl font-bold mb-8 text-center" style={{ color: '#8B0000' }}>Admin Dashboard</h1>
       
-      <div className="mb-12 p-6 border rounded-lg bg-gray-50 shadow-inner">
+      <div className="mb-12 p-6 border rounded-lg bg-white shadow-lg">
         <h2 className="text-2xl font-bold mb-4">Create New Course</h2>
         <form onSubmit={handleCreateCourse} className="space-y-4">
           <input type="text" value={newCourseTitle} onChange={e => setNewCourseTitle(e.target.value)} placeholder="Course Title" className="w-full p-2 border rounded-md" required />

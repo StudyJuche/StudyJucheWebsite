@@ -32,7 +32,7 @@ export const ArticleDetail = () => {
 
   if (loading) {
     return (
-      <div className="pt-20">
+      <div className="pt-20 bg-site-tile bg-repeat bg-auto min-h-screen">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-red-800 mx-auto mt-20"></div>
       </div>
     );
@@ -43,7 +43,7 @@ export const ArticleDetail = () => {
   }
 
   return (
-    <div className="pt-20">
+    <div className="pt-20 bg-site-tile bg-repeat bg-auto min-h-screen">
       {post.feature_image && (
         <div 
           className="h-96 bg-cover bg-center" 

@@ -57,7 +57,7 @@ export const CourseDetail = () => {
 
   if (loading) {
     return (
-      <div className="pt-20">
+      <div className="pt-20 bg-site-tile bg-repeat bg-auto min-h-screen">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-red-800 mx-auto mt-20"></div>
       </div>
     );
@@ -68,7 +68,7 @@ export const CourseDetail = () => {
   }
 
   return (
-    <div className="min-h-screen pt-20">
+    <div className="min-h-screen pt-20 bg-site-tile bg-repeat bg-auto">
       <div className="max-w-4xl mx-auto mt-12 p-8 md:p-12 bg-white rounded-lg shadow-lg">
           <div className="mb-10 pb-8 border-b border-gray-200">
               <Link to="/courses" className="text-sm text-gray-500 hover:text-red-800 transition-colors mb-4 inline-block">

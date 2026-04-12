@@ -36,7 +36,7 @@ export const Page = () => {
 
   if (loading) {
     return (
-      <div className="pt-20"> {/* Add padding for sticky header */}
+      <div className="pt-20 bg-site-tile bg-repeat bg-auto min-h-screen">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-red-800 mx-auto mt-20"></div>
       </div>
     );
@@ -47,7 +47,7 @@ export const Page = () => {
   }
 
   return (
-    <div className="pt-20"> {/* Add padding for sticky header */}
+    <div className="pt-20 bg-site-tile bg-repeat bg-auto min-h-screen">
       {page.feature_image && (
         <div 
           className="h-96 bg-cover bg-center" 

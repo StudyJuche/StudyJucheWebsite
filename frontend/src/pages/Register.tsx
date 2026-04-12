@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import logo from '../assets/images/studyjuche - logo - 250h.png';
 
 export const Register = () => (
-  <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+  <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
     <div className="sm:mx-auto sm:w-full sm:max-w-md">
       <img className="mx-auto h-24 w-auto" src={logo} alt="Study Juche Logo" />
       <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">

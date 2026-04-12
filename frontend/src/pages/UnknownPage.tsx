@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import logo from '../assets/images/studyjuche - logo - 250h.png';
 
 export const UnknownPage = () => (
-  <div className="min-h-screen bg-gray-100 flex flex-col justify-center items-center text-center py-12 px-4 sm:px-6 lg:px-8">
+  <div className="min-h-screen flex flex-col justify-center items-center text-center py-12 px-4 sm:px-6 lg:px-8">
     <img src={logo} alt="Study Juche Logo" className="h-32 w-auto opacity-50 mb-8" />
     <h1 
       className="text-6xl font-extrabold text-red-700"

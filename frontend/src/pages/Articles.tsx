@@ -91,7 +91,7 @@ export const Articles = () => {
   };
 
   return (
-    <div className="min-h-screen pt-20"> {/* Add padding for sticky header */}
+    <div className="min-h-screen pt-20 bg-site-tile bg-repeat bg-auto"> {/* Add background class */}
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h1 

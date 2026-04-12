@@ -5,7 +5,11 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      backgroundImage: {
+        'site-tile': "url('/assets/images/studyjuche - background - fullsize.png')"
+      }
+    },
   },
   plugins: [],
 }

@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import favicon from '../assets/images/studyjuche - favicon.png';
+import favicon from '../assets/images/studyjuche - logo - 50h.png';
 
 interface SiteHeaderProps {
   title?: string;

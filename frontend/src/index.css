@@ -1,3 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@layer utilities {
+    .bg-site-tile {
+        background-image: url('./assets/images/studyjuche - background - fullsize.png');
+    }
+}

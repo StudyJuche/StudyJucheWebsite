@@ -16,8 +16,11 @@ export const TopHeader = () => {
               />
             </Link>
             <nav className="hidden md:flex space-x-6">
-              <Link to="/lessons" className="text-gray-700 hover:text-red-800 font-semibold transition-colors">
-                Lessons
+              <Link to="/courses" className="text-gray-700 hover:text-red-800 font-semibold transition-colors">
+                Courses
+              </Link>
+              <Link to="/articles" className="text-gray-700 hover:text-red-800 font-semibold transition-colors">
+                Articles
               </Link>
               <a 
                 href="https://www.youtube.com/@StudyJuche"
@@ -48,6 +51,9 @@ export const TopHeader = () => {
           {/* Right section: Links */}
           <div className="hidden md:flex items-center justify-end space-x-6 flex-1">
             <nav className="flex space-x-6">
+              <Link to="/admin" className="text-gray-700 hover:text-red-800 font-semibold transition-colors">
+                Admin
+              </Link>
               <Link to="/about" className="text-gray-700 hover:text-red-800 font-semibold transition-colors">
                 About
               </Link>

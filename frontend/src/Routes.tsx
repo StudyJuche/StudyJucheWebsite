@@ -4,8 +4,12 @@ import { Login } from './pages/Login.tsx';
 import { Register } from './pages/Register.tsx';
 import { Dashboard } from './pages/Dashboard.tsx';
 import { UnknownPage } from "./pages/UnknownPage.tsx";
-import { Lessons } from "./pages/Lessons.tsx";
-import { LessonDetail } from "./pages/LessonDetail.tsx";
+import { Articles } from "./pages/Articles.tsx";
+import { ArticleDetail } from "./pages/ArticleDetail.tsx";
+import { Courses } from "./pages/Courses.tsx";
+import { CourseDetail } from "./pages/CourseDetail.tsx";
+import { CourseLessonDetail } from "./pages/CourseLessonDetail.tsx";
+import { AdminDashboard } from "./pages/AdminDashboard.tsx";
 
 // A mock authentication hook. Replace this with actual auth logic
 export const useAuth = () => {
@@ -33,8 +37,12 @@ export const AppRoutes = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/404" element={<UnknownPage />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/lessons" element={<Lessons />} />
-            <Route path="/lessons/:slug" element={<LessonDetail />} />
+            <Route path="/articles" element={<Articles />} />
+            <Route path="/articles/:slug" element={<ArticleDetail />} />
+            <Route path="/courses" element={<Courses />} />
+            <Route path="/courses/:slug" element={<CourseDetail />} />
+            <Route path="/courses/:courseSlug/:lessonSlug" element={<CourseLessonDetail />} />
+            <Route path="/admin" element={<AdminDashboard />} />
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />

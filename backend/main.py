@@ -10,6 +10,8 @@ from typing import List
 import requests
 from dotenv import load_dotenv
 from sqlalchemy.orm import selectinload
+import feedparser
+import time
 
 load_dotenv()
 
@@ -22,6 +24,13 @@ app = FastAPI(lifespan=lifespan)
 
 os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# --- In-memory cache for YouTube feed ---
+youtube_cache = {
+    "timestamp": 0,
+    "videos": []
+}
+CACHE_DURATION = 3600 # 1 hour in seconds
 
 @app.get("/api")
 def read_root():
@@ -47,7 +56,6 @@ def get_ghost_posts_for_admin():
     if not GHOST_URL or not GHOST_CONTENT_KEY:
         raise HTTPException(status_code=500, detail="Ghost URL or Content API Key not configured.")
     
-    # Filter for posts that HAVE the internal #lesson tag
     filter = "tag:hash-lesson"
     ghost_api_url = f"{GHOST_URL}/ghost/api/content/posts/?key={GHOST_CONTENT_KEY}&limit=all&fields=id,title,slug&filter={filter}"
     
@@ -57,6 +65,38 @@ def get_ghost_posts_for_admin():
         return response.json().get("posts", [])
     except requests.exceptions.RequestException as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch posts from Ghost: {e}")
+
+# --- YOUTUBE FEED ENDPOINT ---
+@app.get("/api/youtube/latest")
+def get_latest_youtube_videos():
+    """Fetches the latest videos from a YouTube channel's RSS feed."""
+    now = time.time()
+    # Check cache first
+    if now - youtube_cache["timestamp"] < CACHE_DURATION and youtube_cache["videos"]:
+        return youtube_cache["videos"]
+
+    channel_id = "UCnsmyPvWfq7XAnRmmMwKu2g" # Your Channel ID
+    feed_url = f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
+    
+    try:
+        feed = feedparser.parse(feed_url)
+        videos = []
+        for entry in feed.entries[:4]: # Get the 4 most recent videos
+            video_id = entry.yt_videoid
+            videos.append({
+                "id": video_id,
+                "title": entry.title,
+                "link": entry.link,
+                "thumbnail": f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg"
+            })
+        
+        # Update cache
+        youtube_cache["timestamp"] = now
+        youtube_cache["videos"] = videos
+        
+        return videos
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to parse YouTube RSS feed: {e}")
 
 # --- COURSES ENDPOINTS ---
 
@@ -74,7 +114,6 @@ def delete_course(course_id: int, session: Session = Depends(get_session)):
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
     
-    # Manually delete associated lessons first
     lessons = session.exec(select(CourseLesson).where(CourseLesson.course_id == course_id)).all()
     for lesson in lessons:
         session.delete(lesson)

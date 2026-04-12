@@ -10,6 +10,7 @@ import { Courses } from "./pages/Courses.tsx";
 import { CourseDetail } from "./pages/CourseDetail.tsx";
 import { CourseLessonDetail } from "./pages/CourseLessonDetail.tsx";
 import { AdminDashboard } from "./pages/AdminDashboard.tsx";
+import { Page } from "./pages/Page.tsx"; // Import the new Page component
 
 // A mock authentication hook. Replace this with actual auth logic
 export const useAuth = () => {
@@ -32,23 +33,29 @@ export const ProtectedRoute = () => {
 export const AppRoutes = () => {
     return (
         <Routes>
-            {/* Unprotected/Public Routes */}
+            {/* Specific static routes first */}
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/404" element={<UnknownPage />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/404" element={<UnknownPage />} />
+            
+            {/* App-like sections */}
             <Route path="/articles" element={<Articles />} />
             <Route path="/articles/:slug" element={<ArticleDetail />} />
             <Route path="/courses" element={<Courses />} />
             <Route path="/courses/:slug" element={<CourseDetail />} />
             <Route path="/courses/:courseSlug/:lessonSlug" element={<CourseLessonDetail />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
             </Route>
 
-            {/* Catch-all route for 404s */}
+            {/* Dynamic Page Route - this should be near the end */}
+            <Route path="/:slug" element={<Page />} />
+
+            {/* Catch-all route for 404s - this must be last */}
             <Route path="*" element={<UnknownPage />} />
         </Routes>
     );

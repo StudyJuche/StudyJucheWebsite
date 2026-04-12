@@ -53,6 +53,25 @@ export const getPostBySlug = async (slug: string): Promise<GhostPost | null> => 
   }
 };
 
+export const getPageBySlug = async (slug: string): Promise<GhostPost | null> => {
+  if (!GHOST_CONTENT_KEY) {
+      console.warn("Ghost Content API Key is missing.");
+      return null;
+  }
+
+  try {
+    const res = await fetch(
+      `${GHOST_URL}/ghost/api/content/pages/slug/${slug}/?key=${GHOST_CONTENT_KEY}&include=tags,authors`
+    );
+    if (!res.ok) throw new Error("Failed to fetch page");
+    const data = await res.json();
+    return data.pages[0] || null;
+  } catch (error) {
+    console.error(`Error fetching page ${slug}:`, error);
+    return null;
+  }
+};
+
 // Frontend API to fetch posts from our backend proxy (for Admin Dashboard)
 export const getGhostPosts = async (): Promise<GhostPost[]> => {
   const API_BASE_URL = '/api'; // Use relative path, Caddy will proxy to backend

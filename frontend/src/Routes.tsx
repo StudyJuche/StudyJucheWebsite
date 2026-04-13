@@ -12,10 +12,11 @@ import { CourseDetail } from "./pages/CourseDetail.tsx";
 import { CourseLessonDetail } from "./pages/CourseLessonDetail.tsx";
 import { AdminDashboard } from "./pages/AdminDashboard.tsx";
 import { Page } from "./pages/Page.tsx";
+import { SearchResults } from './pages/SearchResults.tsx'; // Import new component
 
 const ProtectedRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
-  if (isLoading) return <div>Loading...</div>; // Or a spinner component
+  if (isLoading) return <div>Loading...</div>;
   return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
@@ -33,6 +34,7 @@ export const AppRoutes = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/404" element={<UnknownPage />} />
+      <Route path="/search" element={<SearchResults />} /> {/* Add search route */}
       <Route path="/articles" element={<Articles />} />
       <Route path="/articles/:slug" element={<ArticleDetail />} />
       <Route path="/courses" element={<Courses />} />
@@ -42,7 +44,6 @@ export const AppRoutes = () => {
       {/* Protected Routes */}
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<Dashboard />} />
-        {/* Any other user-only routes can go here */}
       </Route>
 
       {/* Admin & Moderator Routes */}

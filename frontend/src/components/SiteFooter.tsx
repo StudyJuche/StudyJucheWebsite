@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import logo from '../assets/images/studyjuche - logo - 50h.png';
 import { FaYoutube, FaTwitter, FaDiscord, FaTwitch } from 'react-icons/fa';
 
@@ -7,6 +7,8 @@ export const SiteFooter = () => {
   const currentYear = new Date().getFullYear();
   const moneroAddress = import.meta.env.VITE_MONERO_ADDRESS || '';
   const [copied, setCopied] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
 
   const socialLinks = {
     youtube: import.meta.env.VITE_YOUTUBE_URL,
@@ -19,6 +21,13 @@ export const SiteFooter = () => {
     navigator.clipboard.writeText(moneroAddress);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?query=${encodeURIComponent(searchQuery.trim())}`);
+    }
   };
 
   const truncatedAddress = moneroAddress ? `${moneroAddress.substring(0, 6)}...${moneroAddress.substring(moneroAddress.length - 4)}` : '';
@@ -41,10 +50,18 @@ export const SiteFooter = () => {
           </div>
 
           <div className="text-center">
-            <div className="relative w-full max-w-sm mx-auto">
-              <input type="search" placeholder="Search content..." className="w-full bg-blue-800 text-white placeholder-gray-400 border-2 border-blue-700 rounded-full py-2 px-4 focus:outline-none focus:border-yellow-600" />
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3"><svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" /></svg></div>
-            </div>
+            <form onSubmit={handleSearch} className="relative w-full max-w-sm mx-auto">
+              <input
+                type="search"
+                placeholder="Search content..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-blue-800 text-white placeholder-gray-400 border-2 border-blue-700 rounded-full py-2 px-4 focus:outline-none focus:border-yellow-600"
+              />
+              <button type="submit" className="absolute inset-y-0 right-0 flex items-center pr-3">
+                <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" /></svg>
+              </button>
+            </form>
             <p className="mt-4 text-sm text-gray-400">Copyright &copy; {currentYear} Study.Juche</p>
             <div className="mt-2 text-xs text-gray-500 space-x-4">
                 <Link to="/privacy" className="hover:text-gray-300">Privacy Policy</Link>

@@ -15,6 +15,7 @@ from typing import List, Optional
 import requests
 from dotenv import load_dotenv
 from sqlalchemy.orm import selectinload
+from sqlalchemy import or_
 import feedparser
 import time
 from datetime import datetime
@@ -187,3 +188,55 @@ def get_latest_youtube_videos():
         youtube_cache.update({"timestamp": now, "videos": videos})
         return videos
     except Exception as e: raise HTTPException(status_code=500, detail=f"Failed to parse YouTube RSS feed: {e}")
+
+# --- Search Endpoint ---
+@app.get("/api/search", tags=["Search"])
+def search_site(query: str, session: Session = Depends(get_session)):
+    """Searches courses, articles (non-lesson posts), and pages."""
+    
+    # Search local database courses
+    db_courses = session.exec(
+        select(Course).where(
+            or_(
+                Course.title.ilike(f"%{query}%"),
+                Course.description.ilike(f"%{query}%")
+            )
+        )
+    ).all()
+    
+    results = {
+        "courses": [{"title": c.title, "url": f"/courses/{c.slug}", "description": c.description} for c in db_courses],
+        "articles": [],
+        "pages": []
+    }
+    
+    GHOST_URL = os.getenv("VITE_GHOST_URL")
+    GHOST_CONTENT_KEY = os.getenv("VITE_GHOST_CONTENT_KEY")
+    if not GHOST_URL or not GHOST_CONTENT_KEY:
+        return results
+
+    headers = {'Accept-Version': 'v5.0'}
+    
+    try:
+        posts_url = f"{GHOST_URL}/ghost/api/content/posts/?key={GHOST_CONTENT_KEY}&filter=tag:-hash-lesson"
+        res_posts = requests.get(posts_url, headers=headers)
+        res_posts.raise_for_status()
+        all_articles = res_posts.json().get("posts", [])
+        for article in all_articles:
+            if query.lower() in article.get('title', '').lower() or query.lower() in article.get('excerpt', '').lower():
+                results["articles"].append({"title": article.get('title'), "url": f"/articles/{article.get('slug')}", "description": article.get('excerpt')})
+    except requests.exceptions.RequestException as e:
+        print(f"Could not fetch Ghost posts for search: {e}")
+
+    try:
+        pages_url = f"{GHOST_URL}/ghost/api/content/pages/?key={GHOST_CONTENT_KEY}"
+        res_pages = requests.get(pages_url, headers=headers)
+        res_pages.raise_for_status()
+        all_pages = res_pages.json().get("pages", [])
+        for page in all_pages:
+            if query.lower() in page.get('title', '').lower() or query.lower() in page.get('excerpt', '').lower():
+                results["pages"].append({"title": page.get('title'), "url": f"/{page.get('slug')}", "description": page.get('excerpt')})
+    except requests.exceptions.RequestException as e:
+        print(f"Could not fetch Ghost pages for search: {e}")
+        
+    return results

@@ -101,7 +101,7 @@ export const Articles = () => {
               WebkitTextStroke: '1px #B8860B',
             }}
           >
-            Articles & Commentaries
+            Articles
           </h1>
           <p className="mt-4 text-xl text-gray-600">
             Insights and analysis on the Juche idea and contemporary issues.

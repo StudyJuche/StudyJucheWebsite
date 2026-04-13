@@ -8,7 +8,7 @@ class UserRole(str, Enum):
     moderator = "moderator"
     student = "student"
 
-# --- Base Models (for creating/reading data) ---
+# --- Base Models ---
 class UserBase(SQLModel):
     username: str = Field(unique=True, index=True)
     email: str = Field(unique=True, index=True)
@@ -26,7 +26,7 @@ class CourseLessonCreate(SQLModel):
     ghost_post_slug: str
     order: int
 
-# --- API "Read" Models (for sending data out) ---
+# --- API "Read" Models ---
 class UserRead(UserBase):
     id: int
     role: UserRole
@@ -60,14 +60,15 @@ class User(UserBase, table=True):
     role: UserRole = Field(default=UserRole.student)
     is_verified: bool = Field(default=False)
     
-    course_progress: List["UserCourseProgress"] = Relationship(back_populates="user")
-    lesson_progress: List["UserLessonProgress"] = Relationship(back_populates="user")
+    course_progress: List["UserCourseProgress"] = Relationship(back_populates="user", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
+    lesson_progress: List["UserLessonProgress"] = Relationship(back_populates="user", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
 
 class Course(CourseBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     slug: str = Field(unique=True, index=True)
-    lessons: List["CourseLesson"] = Relationship(back_populates="course")
-    user_progress: List["UserCourseProgress"] = Relationship(back_populates="course")
+    
+    lessons: List["CourseLesson"] = Relationship(back_populates="course", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
+    user_progress: List["UserCourseProgress"] = Relationship(back_populates="course", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
 
 class CourseLesson(CourseLessonCreate, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

@@ -144,7 +144,7 @@ const FeaturedContent = () => {
 };
 
 const ExplanatoryText = () => (
-  <div className="py-16 bg-gray-50">
+  <div className="py-16 bg-gray-50 pb-24"> {/* Added more bottom padding */}
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-gray-700">
       <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">Why Study Juche?</h2>
       <p className="mb-4 text-lg">

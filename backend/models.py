@@ -1,7 +1,20 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import List, Optional
+from enum import Enum
 
-# --- Base Models (for creating data) ---
+class UserRole(str, Enum):
+    admin = "admin"
+    moderator = "moderator"
+    student = "student"
+
+# --- Base Models (for creating/reading data) ---
+class UserBase(SQLModel):
+    username: str = Field(unique=True, index=True)
+    email: str = Field(unique=True, index=True)
+
+class UserCreate(UserBase):
+    password: str
+
 class CourseBase(SQLModel):
     title: str
     description: str
@@ -11,12 +24,40 @@ class CourseLessonCreate(SQLModel):
     ghost_post_slug: str
     order: int
 
+# --- API "Read" Models (for sending data out) ---
+class UserRead(UserBase):
+    id: int
+    role: UserRole
+    is_verified: bool
+
+class CourseLessonRead(CourseLessonCreate):
+    id: int
+
+class CourseRead(CourseBase):
+    id: int
+
+class CourseReadWithLessons(CourseRead):
+    lessons: List[CourseLessonRead] = []
+
+class LessonProgress(SQLModel):
+    lesson_id: int
+    ghost_post_slug: str
+    is_completed: bool
+    order: int
+
+class CourseProgress(SQLModel):
+    total_lessons: int
+    completed_lessons: int
+    percent_complete: float
+    lesson_progress: List[LessonProgress]
+
 # --- Database Table Models ---
-class User(SQLModel, table=True):
+class User(UserBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    username: str = Field(unique=True, index=True)
-    email: str = Field(unique=True, index=True)
     hashed_password: str
+    role: UserRole = Field(default=UserRole.student)
+    is_verified: bool = Field(default=False)
+    
     course_progress: List["UserCourseProgress"] = Relationship(back_populates="user")
     lesson_progress: List["UserLessonProgress"] = Relationship(back_populates="user")
 
@@ -45,13 +86,3 @@ class UserLessonProgress(SQLModel, table=True):
     ghost_post_slug: str
     is_completed: bool = Field(default=False)
     user: "User" = Relationship(back_populates="lesson_progress")
-
-# --- API "Read" Models (for sending data out) ---
-class CourseLessonRead(CourseLessonCreate):
-    id: int
-
-class CourseRead(CourseBase):
-    id: int
-
-class CourseReadWithLessons(CourseRead):
-    lessons: List[CourseLessonRead] = []

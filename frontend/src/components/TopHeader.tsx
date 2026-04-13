@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import logo from '../assets/images/studyjuche - logo - 250h.png';
 
 export const TopHeader = () => {
+  const { isAuthenticated, user, logout, hasRole } = useAuth();
+
   return (
     <header className="bg-white shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -50,19 +53,35 @@ export const TopHeader = () => {
 
           {/* Right section: Links */}
           <div className="hidden md:flex items-center justify-end space-x-6 flex-1">
-            <nav className="flex space-x-6">
-              <Link to="/admin" className="text-gray-700 hover:text-red-800 font-semibold transition-colors">
-                Admin
-              </Link>
-              <Link to="/about" className="text-gray-700 hover:text-red-800 font-semibold transition-colors">
-                About
-              </Link>
-              <Link to="/community" className="text-gray-700 hover:text-red-800 font-semibold transition-colors">
-                Community
-              </Link>
-              <Link to="/contact" className="text-gray-700 hover:text-red-800 font-semibold transition-colors">
-                Contact
-              </Link>
+            <nav className="flex space-x-6 items-center">
+              {isAuthenticated ? (
+                <>
+                  {hasRole('moderator') && (
+                    <Link to="/admin" className="text-gray-700 hover:text-red-800 font-semibold transition-colors">
+                      Admin
+                    </Link>
+                  )}
+                  <span className="text-gray-700">Welcome, {user?.username}</span>
+                  <button onClick={logout} className="bg-red-700 text-white px-3 py-1 rounded-md text-sm font-medium hover:bg-red-800">
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link to="/about" className="text-gray-700 hover:text-red-800 font-semibold transition-colors">
+                    About
+                  </Link>
+                  <Link to="/community" className="text-gray-700 hover:text-red-800 font-semibold transition-colors">
+                    Community
+                  </Link>
+                  <Link to="/contact" className="text-gray-700 hover:text-red-800 font-semibold transition-colors">
+                    Contact
+                  </Link>
+                  <Link to="/login" className="bg-red-700 text-white px-3 py-1 rounded-md text-sm font-medium hover:bg-red-800">
+                    Login
+                  </Link>
+                </>
+              )}
             </nav>
           </div>
           

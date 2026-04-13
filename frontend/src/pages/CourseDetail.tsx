@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getCourseDetails, getCourseProgress, Course, CourseLesson, CourseProgress } from '../api/courses';
 import { getPostBySlug, GhostPost } from '../api/ghost';
+import { useAuth } from '../context/AuthContext';
 import { UnknownPage } from './UnknownPage';
 
 interface EnrichedLesson extends CourseLesson {
@@ -11,27 +12,29 @@ interface EnrichedLesson extends CourseLesson {
 
 export const CourseDetail = () => {
   const { slug } = useParams<{ slug: string }>();
+  const { token, isAuthenticated } = useAuth();
   const [course, setCourse] = useState<Course | null>(null);
   const [lessons, setLessons] = useState<EnrichedLesson[]>([]);
   const [progress, setProgress] = useState<CourseProgress | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Effect 1: Fetch the public course and lesson data
   useEffect(() => {
-    const fetchCourseData = async () => {
-      if (!slug) return;
+    const fetchBaseCourseData = async () => {
+      if (!slug) {
+        setError("Course slug not found in URL.");
+        setLoading(false);
+        return;
+      }
       
       try {
         setLoading(true);
         const data = await getCourseDetails(slug);
+        if (!data || !data.course) {
+          throw new Error("Course not found from API.");
+        }
         setCourse(data.course);
-        
-        const progressData = await getCourseProgress(data.course.id);
-        setProgress(progressData);
-
-        const progressMap = new Map(
-            progressData.lesson_progress.map(p => [p.ghost_post_slug, p.is_completed])
-        );
 
         const enrichedLessons = await Promise.all(
           data.lessons.map(async (lesson) => {
@@ -39,21 +42,49 @@ export const CourseDetail = () => {
             return {
               ...lesson,
               ghostPost: ghostPost || undefined,
-              is_completed: progressMap.get(lesson.ghost_post_slug) || false
+              is_completed: false, // Default to false
             };
           })
         );
-        
         setLessons(enrichedLessons);
-      } catch (err) {
-        setError('Failed to load course details.');
+
+      } catch (err: any) {
+        console.error("Error fetching base course data:", err);
+        setError(err.message || 'Failed to load course details.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCourseData();
+    fetchBaseCourseData();
   }, [slug]);
+
+  // Effect 2: Fetch user-specific progress once the course and user are known
+  useEffect(() => {
+    const fetchProgress = async () => {
+      if (isAuthenticated && token && course) {
+        try {
+          const progressData = await getCourseProgress(course.id, token);
+          
+          if (progressData && progressData.lesson_progress) {
+            setProgress(progressData);
+            const progressMap = new Map(progressData.lesson_progress.map(p => [p.ghost_post_slug, p.is_completed]));
+            setLessons(currentLessons => 
+              currentLessons.map(lesson => ({
+                ...lesson,
+                is_completed: progressMap.get(lesson.ghost_post_slug) || false,
+              }))
+            );
+          }
+
+        } catch (err) {
+          console.error("Failed to fetch user progress:", err);
+        }
+      }
+    };
+
+    fetchProgress();
+  }, [course, token, isAuthenticated]);
 
   if (loading) {
     return (
@@ -76,10 +107,7 @@ export const CourseDetail = () => {
               </Link>
               <h1 
                 className="text-4xl md:text-5xl font-serif font-bold uppercase tracking-wider"
-                style={{
-                  color: '#8B0000',
-                  WebkitTextStroke: '1px #B8860B',
-                }}
+                style={{ color: '#8B0000', WebkitTextStroke: '1px #B8860B' }}
               >
                   {course.title}
               </h1>
@@ -87,7 +115,7 @@ export const CourseDetail = () => {
                   {course.description}
               </p>
               
-              {progress && progress.total_lessons > 0 && (
+              {isAuthenticated && progress && progress.total_lessons > 0 && (
                   <div className="mt-8 bg-gray-50 p-6 rounded-lg border border-gray-200">
                       <div className="flex justify-between items-center mb-2">
                           <span className="font-semibold text-gray-700">Course Progress</span>
@@ -111,7 +139,7 @@ export const CourseDetail = () => {
               <div className="space-y-4">
                   {lessons.map((lesson, index) => (
                       <Link 
-                          to={`/courses/${course.slug}/${lesson.ghost_post_slug}`}
+                          to={`/courses/${slug}/${lesson.ghost_post_slug}`}
                           key={lesson.id}
                           className={`block p-6 border rounded-lg hover:shadow-md transition-shadow duration-200
                               ${lesson.is_completed ? 'border-green-200 bg-green-50' : 'border-gray-200 hover:border-red-300'}
@@ -128,20 +156,13 @@ export const CourseDetail = () => {
                                       <h3 className={`text-lg font-semibold ${lesson.is_completed ? 'text-green-900' : 'text-gray-900'}`}>
                                           {lesson.ghostPost ? lesson.ghostPost.title : "Loading lesson title..."}
                                       </h3>
-                                      {lesson.ghostPost && lesson.ghostPost.excerpt && (
-                                          <p className="text-sm text-gray-600 mt-1 line-clamp-1">
-                                              {lesson.ghostPost.excerpt}
-                                          </p>
-                                      )}
                                   </div>
                               </div>
                               
                               <div className="flex-shrink-0 ml-4">
                                   {lesson.is_completed ? (
                                       <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                                          <svg className="-ml-1 mr-1.5 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                          </svg>
+                                          <svg className="-ml-1 mr-1.5 h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
                                           Completed
                                       </span>
                                   ) : (

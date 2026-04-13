@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { getCourses, createCourse, addLessonToCourse, deleteCourse, deleteLesson, Course, CourseLessonCreate } from '../api/courses';
-import { getGhostPosts, GhostPost } from '../api/ghost';
+import { getGhostPosts } from '../api/ghost';
 import { Notification } from '../components/Notification';
 import { ConfirmationDialog } from '../components/ConfirmationDialog';
+import { useAuth } from '../context/AuthContext';
 
 interface GhostPostForAdmin {
   id: string;
@@ -10,7 +11,7 @@ interface GhostPostForAdmin {
   slug: string;
 }
 
-const CourseManager = ({ course, ghostPosts, onDataChange, setNotification }: { course: Course, ghostPosts: GhostPostForAdmin[], onDataChange: () => void, setNotification: (notification: { message: string, type: 'success' | 'error' } | null) => void }) => {
+const CourseManager = ({ course, ghostPosts, onDataChange, setNotification, token }: { course: Course, ghostPosts: GhostPostForAdmin[], onDataChange: () => void, setNotification: (notification: { message: string, type: 'success' | 'error' } | null) => void, token: string }) => {
   const [selectedGhostPostSlug, setSelectedGhostPostSlug] = useState('');
   const [newLessonOrder, setNewLessonOrder] = useState('');
   const [addingLesson, setAddingLesson] = useState(false);
@@ -24,10 +25,7 @@ const CourseManager = ({ course, ghostPosts, onDataChange, setNotification }: { 
     }
     setAddingLesson(true);
     try {
-      await addLessonToCourse(course.id, {
-        ghost_post_slug: selectedGhostPostSlug,
-        order: parseInt(newLessonOrder),
-      });
+      await addLessonToCourse(course.id, { ghost_post_slug: selectedGhostPostSlug, order: parseInt(newLessonOrder) }, token);
       setSelectedGhostPostSlug('');
       setNewLessonOrder('');
       onDataChange();
@@ -50,7 +48,7 @@ const CourseManager = ({ course, ghostPosts, onDataChange, setNotification }: { 
 
   const handleDeleteLesson = async (lessonId: number) => {
     try {
-      await deleteLesson(lessonId);
+      await deleteLesson(lessonId, token);
       onDataChange();
       setNotification({ message: 'Lesson deleted successfully!', type: 'success' });
     } catch (err) {
@@ -71,7 +69,7 @@ const CourseManager = ({ course, ghostPosts, onDataChange, setNotification }: { 
 
   const handleDeleteCourse = async () => {
     try {
-      await deleteCourse(course.id);
+      await deleteCourse(course.id, token);
       onDataChange();
       setNotification({ message: 'Course deleted successfully!', type: 'success' });
     } catch (err) {
@@ -123,8 +121,12 @@ const CourseManager = ({ course, ghostPosts, onDataChange, setNotification }: { 
                   </a>
                 </div>
                 <select id={`select-ghost-post-${course.id}`} value={selectedGhostPostSlug} onChange={e => setSelectedGhostPostSlug(e.target.value)} className="w-full p-2 border rounded-md" required>
-                  <option value="">-- Select Ghost Post --</option>
-                  {ghostPosts.map(post => <option key={post.id} value={post.slug}>{post.title}</option>)}
+                  <option value="">-- Select a Lesson --</option>
+                  {ghostPosts.map(post => (
+                    <option key={post.id} value={post.slug}>
+                      {post.title} ({post.slug})
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -150,6 +152,7 @@ const CourseManager = ({ course, ghostPosts, onDataChange, setNotification }: { 
 };
 
 export const AdminDashboard = () => {
+  const { token } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [ghostPosts, setGhostPosts] = useState<GhostPostForAdmin[]>([]);
   const [loading, setLoading] = useState(true);
@@ -161,11 +164,12 @@ export const AdminDashboard = () => {
   const [creatingCourse, setCreatingCourse] = useState(false);
 
   const fetchAllData = async () => {
+    if (!token) return;
     try {
       setLoading(true);
       const [fetchedCourses, fetchedGhostPosts] = await Promise.all([
         getCourses(),
-        getGhostPosts()
+        getGhostPosts(token)
       ]);
       setCourses(fetchedCourses);
       setGhostPosts(fetchedGhostPosts);
@@ -178,8 +182,10 @@ export const AdminDashboard = () => {
   };
 
   useEffect(() => {
-    fetchAllData();
-  }, []);
+    if (token) {
+      fetchAllData();
+    }
+  }, [token]);
 
   useEffect(() => {
     if (notification) {
@@ -192,9 +198,13 @@ export const AdminDashboard = () => {
 
   const handleCreateCourse = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!token) {
+      setNotification({ message: 'Authentication error.', type: 'error' });
+      return;
+    }
     setCreatingCourse(true);
     try {
-      await createCourse({ title: newCourseTitle, description: newCourseDescription, slug: newCourseSlug });
+      await createCourse({ title: newCourseTitle, description: newCourseDescription, slug: newCourseSlug }, token);
       setNewCourseTitle('');
       setNewCourseDescription('');
       setNewCourseSlug('');
@@ -208,7 +218,7 @@ export const AdminDashboard = () => {
     }
   };
 
-  if (loading && courses.length === 0) {
+  if (loading) {
     return <div className="p-8 text-center">Loading...</div>;
   }
 
@@ -236,7 +246,7 @@ export const AdminDashboard = () => {
       <div>
         <h2 className="text-3xl font-bold mb-6">Manage Existing Courses</h2>
         {courses.map(course => (
-          <CourseManager key={course.id} course={course} ghostPosts={ghostPosts} onDataChange={fetchAllData} setNotification={setNotification} />
+          <CourseManager key={course.id} course={course} ghostPosts={ghostPosts} onDataChange={fetchAllData} setNotification={setNotification} token={token || ''} />
         ))}
       </div>
     </div>

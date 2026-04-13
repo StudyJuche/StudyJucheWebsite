@@ -73,16 +73,21 @@ const CoreCourses = () => (
 );
 
 const FeaturedContent = () => {
-  const [videos, setVideos] = useState([]);
+  const [videos, setVideos] = useState<any[]>([]); // Initialize as an empty array
+  const [videoError, setVideoError] = useState(false);
 
   useEffect(() => {
     const fetchVideos = async () => {
       try {
         const res = await fetch('/api/youtube/latest');
+        if (!res.ok) {
+          throw new Error('Network response was not ok');
+        }
         const data = await res.json();
-        setVideos(data);
+        setVideos(data || []); // Ensure data is an array
       } catch (error) {
         console.error("Failed to fetch YouTube videos:", error);
+        setVideoError(true);
       }
     };
     fetchVideos();
@@ -108,7 +113,7 @@ const FeaturedContent = () => {
         <div className="bg-red-700 text-white p-8 rounded-lg shadow-lg">
           <h3 className="text-3xl font-bold mb-4">StudyJuche on YouTube</h3>
           <div className="grid grid-cols-2 gap-4">
-            {videos.length > 0 ? (
+            {(videos && videos.length > 0) ? (
               videos.map((video: any) => (
                 <a key={video.id} href={video.link} target="_blank" rel="noopener noreferrer" className="block group">
                   <div className="relative aspect-video rounded-md overflow-hidden bg-gray-900">
@@ -121,9 +126,10 @@ const FeaturedContent = () => {
                 </a>
               ))
             ) : (
-              // Placeholders for when videos are loading or fail to load
               [...Array(4)].map((_, i) => (
-                <div key={i} className="bg-gray-900 aspect-video rounded-md flex items-center justify-center"><span className="text-gray-400">Loading...</span></div>
+                <div key={i} className="bg-gray-900 aspect-video rounded-md flex items-center justify-center">
+                  <span className="text-gray-400">{videoError ? 'Error' : 'Loading...'}</span>
+                </div>
               ))
             )}
           </div>

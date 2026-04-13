@@ -6,3 +6,6 @@ python-multipart
 python-dotenv
 requests
 feedparser
+passlib[bcrypt]
+python-jose[cryptography]
+argon2-cffi

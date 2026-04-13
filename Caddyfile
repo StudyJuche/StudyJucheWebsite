@@ -1,4 +1,10 @@
 :8080 {
+    # Explicitly proxy all backend routes. Caddy will match the first one.
     reverse_proxy /api/* backend:8000
+    reverse_proxy /token backend:8000
+    reverse_proxy /register backend:8000
+    reverse_proxy /users/me backend:8000
+
+    # Fallback for all other requests to the frontend app.
     reverse_proxy frontend:8081
 }

@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getCourseDetails, markLessonComplete, Course, CourseLesson } from '../api/courses';
 import { getPostBySlug, GhostPost } from '../api/ghost';
+import { useAuth } from '../context/AuthContext';
 import { UnknownPage } from './UnknownPage';
 
 export const CourseLessonDetail = () => {
   const { courseSlug, lessonSlug } = useParams<{ courseSlug: string, lessonSlug: string }>();
   const navigate = useNavigate();
+  const { token, isAuthenticated } = useAuth();
   
   const [course, setCourse] = useState<Course | null>(null);
   const [post, setPost] = useState<GhostPost | null>(null);
@@ -42,11 +44,11 @@ export const CourseLessonDetail = () => {
   }, [courseSlug, lessonSlug]);
 
   const handleMarkComplete = async () => {
-      if (!lessonSlug) return;
+      if (!lessonSlug || !token) return;
       
       try {
           setMarkingComplete(true);
-          await markLessonComplete(lessonSlug);
+          await markLessonComplete(lessonSlug, token);
           
           const currentIndex = lessons.findIndex(l => l.ghost_post_slug === lessonSlug);
           if (currentIndex !== -1 && currentIndex < lessons.length - 1) {
@@ -57,7 +59,6 @@ export const CourseLessonDetail = () => {
           }
       } catch (err) {
           console.error("Failed to mark complete", err);
-          // In a real app, you'd use a proper notification system here
           alert("Failed to save progress. Please try again.");
       } finally {
           setMarkingComplete(false);
@@ -111,21 +112,23 @@ export const CourseLessonDetail = () => {
             dangerouslySetInnerHTML={{ __html: post.html || '' }} 
           />
           
-          <div className="mt-16 pt-8 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between">
-              <Link to={`/courses/${course.slug}`} className="text-gray-600 hover:text-red-800 font-medium mb-4 sm:mb-0">
-                  &larr; Back to Syllabus
-              </Link>
-              
-              <button 
-                  onClick={handleMarkComplete}
-                  disabled={markingComplete}
-                  className={`px-8 py-3 rounded-lg font-bold text-white shadow-md transition-all
-                      ${markingComplete ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 hover:shadow-lg'}
-                  `}
-              >
-                  {markingComplete ? 'Saving...' : (isLastLesson ? 'Finish Course \u2713' : 'Mark Complete & Continue \u2192')}
-              </button>
-          </div>
+          {isAuthenticated && (
+            <div className="mt-16 pt-8 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between">
+                <Link to={`/courses/${course.slug}`} className="text-gray-600 hover:text-red-800 font-medium mb-4 sm:mb-0">
+                    &larr; Back to Syllabus
+                </Link>
+                
+                <button 
+                    onClick={handleMarkComplete}
+                    disabled={markingComplete}
+                    className={`px-8 py-3 rounded-lg font-bold text-white shadow-md transition-all
+                        ${markingComplete ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 hover:shadow-lg'}
+                    `}
+                >
+                    {markingComplete ? 'Saving...' : (isLastLesson ? 'Finish Course \u2713' : 'Mark Complete & Continue \u2192')}
+                </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

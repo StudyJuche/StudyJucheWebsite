@@ -62,7 +62,7 @@ export const SiteFooter = () => {
                 <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" /></svg>
               </button>
             </form>
-            <p className="mt-4 text-sm text-gray-400">Copyright &copy; {currentYear} Study.Juche</p>
+            <p className="mt-4 text-sm text-gray-400">Copyright &copy; {currentYear} Study Juche</p>
             <div className="mt-2 text-xs text-gray-500 space-x-4">
                 <Link to="/privacy" className="hover:text-gray-300">Privacy Policy</Link>
                 <span>&bull;</span>
@@ -72,7 +72,7 @@ export const SiteFooter = () => {
 
           {moneroAddress && (
             <div className="text-center md:text-right">
-              <h3 className="font-semibold text-gray-200">Support Study.Juche</h3>
+              <h3 className="font-semibold text-gray-200">Support Study Juche</h3>
               <div className="mt-2 flex items-center justify-center md:justify-end group relative">
                 <svg className="h-6 w-6 text-yellow-500 mr-2" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-3.5-9.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5-1.5.67-1.5 1.5.67 1.5 1.5 1.5zm7 0c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5-1.5.67-1.5 1.5.67 1.5 1.5 1.5zm-3.5 4c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
                 <p className="text-sm font-mono text-gray-300">{truncatedAddress}</p>
@@ -81,7 +81,7 @@ export const SiteFooter = () => {
                 </div>
               </div>
               <button onClick={handleCopy} className="mt-2 text-xs bg-yellow-600 hover:bg-yellow-700 text-blue-900 font-bold py-1 px-3 rounded-full">
-                {copied ? 'Copied!' : 'Copy Address'}
+                {copied ? 'Copied!' : 'Copy Monero Address'}
               </button>
             </div>
           )}

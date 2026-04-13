@@ -87,7 +87,7 @@ export const TopHeader = () => {
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex">
             <Link to="/" className="flex items-center">
               <span className="text-3xl md:text-4xl font-serif font-bold uppercase tracking-wider" style={{ color: '#8B0000', WebkitTextStroke: '1px #B8860B' }}>
-                Study.Juche
+                Study Juche
               </span>
             </Link>
           </div>

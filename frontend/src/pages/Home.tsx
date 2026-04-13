@@ -19,12 +19,12 @@ const HeroBanner = () => {
           className="text-4xl md:text-6xl font-serif font-bold uppercase tracking-wider mb-2 text-white"
           style={{ textShadow: '3px 3px 6px rgba(0,0,0,0.5)' }}
         >
-          <span className="md:hidden">Welcome to Study.Juche</span>
+          <span className="md:hidden">Welcome to Study Juche</span>
           <span 
             className="hidden md:inline"
             style={{ WebkitTextStroke: '1.5px #8B0000' }}
           >
-            Welcome to Study.Juche
+            Welcome to Study Juche
           </span>
         </h1>
         <p className="text-xl md:text-2xl font-light text-gray-300 mb-8">Learn from the Source</p>
@@ -47,7 +47,7 @@ const CoreCourses = () => (
         {/* Course 1 */}
         <div className="relative bg-white p-8 pt-16 rounded-lg shadow-lg border-4 border-red-600 text-center">
           <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-red-600 p-4 rounded-full border-4 border-white">
-            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v11.494m-9-5.747h18"></path></svg>
+            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v11.494m-9-5.747h18"></path></svg> {/* Book icon */}
           </div>
           <h3 className="text-2xl font-bold text-gray-900 mb-3">Core Principles</h3>
           <p className="text-gray-600 mb-6">A deep dive in the philosophy of Juche.</p>
@@ -56,7 +56,7 @@ const CoreCourses = () => (
         {/* Course 2 */}
         <div className="relative bg-white p-8 pt-16 rounded-lg shadow-lg border-4 border-blue-600 text-center">
           <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-blue-600 p-4 rounded-full border-4 border-white">
-            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6H5a2 2 0 00-2 2zm0 0h18"></path></svg>
+            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6H5a2 2 0 00-2 2zm0 0h18"></path></svg> {/* Political icon */}
           </div>
           <h3 className="text-2xl font-bold text-gray-900 mb-3">Political Independence</h3>
           <p className="text-gray-600 mb-6">Exploring the theory of sovereign socialism.</p>
@@ -65,7 +65,7 @@ const CoreCourses = () => (
         {/* Course 3 */}
         <div className="relative bg-white p-8 pt-16 rounded-lg shadow-lg border-4 border-red-600 text-center">
           <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-red-600 p-4 rounded-full border-4 border-white">
-            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg> {/* Economic icon */}
           </div>
           <h3 className="text-2xl font-bold text-gray-900 mb-3">Economic Self-Reliance</h3>
           <p className="text-gray-600 mb-6">The model for independent self-sustaining economics.</p>
@@ -115,7 +115,7 @@ const FeaturedContent = () => {
         </div>
         {/* YouTube Section */}
         <div className="bg-red-700 text-white p-8 rounded-lg shadow-lg">
-          <h3 className="text-3xl font-bold mb-4">StudyJuche on YouTube</h3>
+          <h3 className="text-3xl font-bold mb-4">Study Juche on YouTube</h3>
           <div className="grid grid-cols-2 gap-4">
             {(videos && videos.length > 0) ? (
               videos.map((video: any) => (
@@ -144,48 +144,74 @@ const FeaturedContent = () => {
 };
 
 const UsefulWebsites = () => (
-  <div className="py-16 bg-gray-50">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">Useful Resources</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-        {/* Website 1 */}
-        <div className="bg-white p-6 rounded-lg shadow-lg text-center flex flex-col justify-between">
-          <div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">korean-books.kp</h3>
-            <p className="text-gray-600 text-sm mb-4">A site with many resources about DPRK and Juche theory.</p>
-          </div>
-          <a href="http://korean-books.kp" target="_blank" rel="noopener noreferrer" className="inline-block font-semibold text-red-700 hover:underline mt-auto">Visit Site &rarr;</a>
+    <div className="py-16 bg-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 className="text-3xl font-bold text-center text-gray-800 mb-20">Useful Resources</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-20 mb-8">
+
+          {/* Website 1: korean-books.kp (Book icon) */}
+          <a href="http://korean-books.kp" target="_blank" rel="noopener noreferrer" className="relative block bg-white p-6 pt-16 rounded-lg shadow-lg text-center flex flex-col justify-between transform transition-all duration-300 hover:scale-105 hover:shadow-xl border border-gray-200 hover:border-red-500">
+            <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-red-600 p-4 rounded-full border-4 border-white">
+              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+              </svg> {/* Book icon */}
+            </div>
+            <div className="flex-grow">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">korean-books.kp</h3>
+              <p className="text-gray-600 text-sm">A site with many resources about DPRK and Juche theory.</p>
+            </div>
+            <span className="inline-block font-semibold text-red-700 hover:underline mt-4">Visit Site &rarr;</span>
+          </a>
+
+          {/* Website 2: rodong.rep.kp (Flame icon) */}
+          <a href="http://rodong.rep.kp" target="_blank" rel="noopener noreferrer" className="relative block bg-white p-6 pt-16 rounded-lg shadow-lg text-center flex flex-col justify-between transform transition-all duration-300 hover:scale-105 hover:shadow-xl border border-gray-200 hover:border-blue-500">
+            <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-blue-600 p-4 rounded-full border-4 border-white">
+              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path>
+              </svg> {/* Flame icon */}
+            </div>
+            <div className="flex-grow">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">rodong.rep.kp</h3>
+              <p className="text-gray-600 text-sm">The official publication of the Worker's Party of Korea.</p>
+            </div>
+            <span className="inline-block font-semibold text-blue-700 hover:underline mt-4">Visit Site &rarr;</span>
+          </a>
+
+          {/* Website 3: dprkportal.kp (Search icon) */}
+          <a href="http://dprkportal.kp" target="_blank" rel="noopener noreferrer" className="relative block bg-white p-6 pt-16 rounded-lg shadow-lg text-center flex flex-col justify-between transform transition-all duration-300 hover:scale-105 hover:shadow-xl border border-gray-200 hover:border-red-500">
+            <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-red-600 p-4 rounded-full border-4 border-white">
+              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg> {/* Search icon */}
+            </div>
+            <div className="flex-grow">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">dprkportal.kp</h3>
+              <p className="text-gray-600 text-sm">A search portal for all things related to DPRK.</p>
+            </div>
+            <span className="inline-block font-semibold text-red-700 hover:underline mt-4">Visit Site &rarr;</span>
+          </a>
+
+          {/* Website 4: korea-dpr.com (Star icon) */}
+          <a href="http://korea-dpr.com" target="_blank" rel="noopener noreferrer" className="relative block bg-white p-6 pt-16 rounded-lg shadow-lg text-center flex flex-col justify-between transform transition-all duration-300 hover:scale-105 hover:shadow-xl border border-gray-200 hover:border-blue-500">
+            <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-blue-600 p-4 rounded-full border-4 border-white">
+              <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.538 1.118l-2.8-2.034a1 1 0 00-1.176 0l-2.8 2.034c-.783.57-1.838-.197-1.538-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.929 8.73c-.783-.57-.381-1.81.588-1.81h3.462a1 1 0 00.95-.69l1.07-3.292z"></path>
+              </svg> {/* Star icon */}
+            </div>
+            <div className="flex-grow">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">korea-dpr.com</h3>
+              <p className="text-gray-600 text-sm">The homepage of the Korean Friendship Association.</p>
+            </div>
+            <span className="inline-block font-semibold text-blue-700 hover:underline mt-4">Visit Site &rarr;</span>
+          </a>
+
         </div>
-        {/* Website 2 */}
-        <div className="bg-white p-6 rounded-lg shadow-lg text-center flex flex-col justify-between">
-          <div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">rodong.rep.kp</h3>
-            <p className="text-gray-600 text-sm mb-4">The official publication of the Worker's Party of Korea.</p>
-          </div>
-          <a href="http://rodong.rep.kp" target="_blank" rel="noopener noreferrer" className="inline-block font-semibold text-red-700 hover:underline mt-auto">Visit Site &rarr;</a>
-        </div>
-        {/* Website 3 */}
-        <div className="bg-white p-6 rounded-lg shadow-lg text-center flex flex-col justify-between">
-          <div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">dprkportal.kp</h3>
-            <p className="text-gray-600 text-sm mb-4">A search portal for all things related to DPRK.</p>
-          </div>
-          <a href="http://dprkportal.kp" target="_blank" rel="noopener noreferrer" className="inline-block font-semibold text-red-700 hover:underline mt-auto">Visit Site &rarr;</a>
-        </div>
-        {/* Website 4 */}
-        <div className="bg-white p-6 rounded-lg shadow-lg text-center flex flex-col justify-between">
-          <div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">korea-dpr.com</h3>
-            <p className="text-gray-600 text-sm mb-4">The homepage of the Korean Friendship Association.</p>
-          </div>
-          <a href="http://korea-dpr.com" target="_blank" rel="noopener noreferrer" className="inline-block font-semibold text-red-700 hover:underline mt-auto">Visit Site &rarr;</a>
-        </div>
+        <p className="text-center text-gray-700 text-sm italic max-w-2xl mx-auto">
+          Please note: Study Juche is not officially related to any of these organizations. These links are provided for students to access resources, news, and information free from Western imperialist lies.
+        </p>
       </div>
-      <p className="text-center text-gray-700 text-sm italic max-w-2xl mx-auto">
-        Please note: Study Juche is not officially related to any of these organizations. These links are provided for students to access resources, news, and information free from Western imperialist lies.
-      </p>
     </div>
-  </div>
 );
 
 const ExplanatoryText = () => (

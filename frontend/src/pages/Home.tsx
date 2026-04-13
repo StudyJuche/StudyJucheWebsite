@@ -1,42 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import logo from '../assets/images/studyjuche - logo - 500h.png'; // Using a larger logo for the banner
 import heroBg from '../assets/images/studyjuche - background - fullsize.png'; // Placeholder background
 
-const HeroBanner = () => (
-  <div 
-    className="relative text-white py-20 px-4 text-center overflow-hidden bg-cover bg-center"
-    style={{ backgroundImage: `url(${heroBg})` }}
-  >
-    <div className="absolute inset-0 bg-black opacity-60"></div>
-    <div className="relative z-10 flex flex-col items-center">
-      <img src={logo} alt="Study Juche Logo" className="h-48 md:h-64 w-auto object-contain mb-6" />
-      <h1 
-        className="text-4xl md:text-6xl font-serif font-bold uppercase tracking-wider mb-2 text-white"
-        style={{
-          // The text stroke will only apply on medium screens and up
-          // On mobile, it will be solid white with a text shadow
-          textShadow: '3px 3px 6px rgba(0,0,0,0.5)'
-        }}
-      >
-        <span className="md:hidden">Welcome to Study.Juche</span>
-        <span 
-          className="hidden md:inline"
-          style={{ WebkitTextStroke: '1.5px #8B0000' }}
+const HeroBanner = () => {
+  const { isAuthenticated } = useAuth();
+
+  return (
+    <div 
+      className="relative text-white py-20 px-4 text-center overflow-hidden bg-cover bg-center"
+      style={{ backgroundImage: `url(${heroBg})` }}
+    >
+      <div className="absolute inset-0 bg-black opacity-60"></div>
+      <div className="relative z-10 flex flex-col items-center">
+        <img src={logo} alt="Study Juche Logo" className="h-48 md:h-64 w-auto object-contain mb-6" />
+        <h1 
+          className="text-4xl md:text-6xl font-serif font-bold uppercase tracking-wider mb-2 text-white"
+          style={{ textShadow: '3px 3px 6px rgba(0,0,0,0.5)' }}
         >
-          Welcome to Study.Juche
-        </span>
-      </h1>
-      <p className="text-xl md:text-2xl font-light text-gray-300 mb-8">Learn from the Source</p>
-      <Link
-        to="/register"
-        className="bg-red-700 hover:bg-red-800 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105"
-      >
-        Start Your Lessons
-      </Link>
+          <span className="md:hidden">Welcome to Study.Juche</span>
+          <span 
+            className="hidden md:inline"
+            style={{ WebkitTextStroke: '1.5px #8B0000' }}
+          >
+            Welcome to Study.Juche
+          </span>
+        </h1>
+        <p className="text-xl md:text-2xl font-light text-gray-300 mb-8">Learn from the Source</p>
+        <Link
+          to={isAuthenticated ? "/dashboard" : "/register"}
+          className="bg-red-700 hover:bg-red-800 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105"
+        >
+          {isAuthenticated ? "Go to Dashboard" : "Start Your Lessons"}
+        </Link>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const CoreCourses = () => (
   <div className="py-16 bg-gray-100">
@@ -46,7 +47,6 @@ const CoreCourses = () => (
         {/* Course 1 */}
         <div className="relative bg-white p-8 pt-16 rounded-lg shadow-lg border-4 border-red-600 text-center">
           <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-red-600 p-4 rounded-full border-4 border-white">
-            {/* Placeholder Icon */}
             <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v11.494m-9-5.747h18"></path></svg>
           </div>
           <h3 className="text-2xl font-bold text-gray-900 mb-3">Core Principles</h3>
@@ -56,7 +56,6 @@ const CoreCourses = () => (
         {/* Course 2 */}
         <div className="relative bg-white p-8 pt-16 rounded-lg shadow-lg border-4 border-blue-600 text-center">
           <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-blue-600 p-4 rounded-full border-4 border-white">
-            {/* Placeholder Icon */}
             <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6H5a2 2 0 00-2 2zm0 0h18"></path></svg>
           </div>
           <h3 className="text-2xl font-bold text-gray-900 mb-3">Political Independence</h3>
@@ -66,7 +65,6 @@ const CoreCourses = () => (
         {/* Course 3 */}
         <div className="relative bg-white p-8 pt-16 rounded-lg shadow-lg border-4 border-red-600 text-center">
           <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-red-600 p-4 rounded-full border-4 border-white">
-            {/* Placeholder Icon */}
             <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
           </div>
           <h3 className="text-2xl font-bold text-gray-900 mb-3">Economic Self-Reliance</h3>
@@ -79,7 +77,7 @@ const CoreCourses = () => (
 );
 
 const FeaturedContent = () => {
-  const [videos, setVideos] = useState<any[]>([]); // Initialize as an empty array
+  const [videos, setVideos] = useState<any[]>([]);
   const [videoError, setVideoError] = useState(false);
 
   useEffect(() => {
@@ -90,7 +88,7 @@ const FeaturedContent = () => {
           throw new Error('Network response was not ok');
         }
         const data = await res.json();
-        setVideos(data || []); // Ensure data is an array
+        setVideos(data || []);
       } catch (error) {
         console.error("Failed to fetch YouTube videos:", error);
         setVideoError(true);

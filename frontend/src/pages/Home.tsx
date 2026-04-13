@@ -12,14 +12,20 @@ const HeroBanner = () => (
     <div className="relative z-10 flex flex-col items-center">
       <img src={logo} alt="Study Juche Logo" className="h-48 md:h-64 w-auto object-contain mb-6" />
       <h1 
-        className="text-4xl md:text-6xl font-serif font-bold uppercase tracking-wider mb-2"
+        className="text-4xl md:text-6xl font-serif font-bold uppercase tracking-wider mb-2 text-white"
         style={{
-          color: '#FFFFFF',
-          WebkitTextStroke: '1.5px #8B0000',
+          // The text stroke will only apply on medium screens and up
+          // On mobile, it will be solid white with a text shadow
           textShadow: '3px 3px 6px rgba(0,0,0,0.5)'
         }}
       >
-        Welcome to Study.Juche
+        <span className="md:hidden">Welcome to Study.Juche</span>
+        <span 
+          className="hidden md:inline"
+          style={{ WebkitTextStroke: '1.5px #8B0000' }}
+        >
+          Welcome to Study.Juche
+        </span>
       </h1>
       <p className="text-xl md:text-2xl font-light text-gray-300 mb-8">Learn from the Source</p>
       <Link

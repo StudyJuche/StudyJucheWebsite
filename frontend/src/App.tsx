@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import SiteHeader from './components/SiteHeader.tsx';
 import { TopHeader } from './components/TopHeader.tsx';
 import { SiteFooter } from './components/SiteFooter.tsx';
+import { CookieConsent } from './components/CookieConsent.tsx'; // Import the new component
 
 function App() {
   const location = useLocation();
@@ -21,6 +22,7 @@ function App() {
             <AppRoutes />
           </main>
           <SiteFooter />
+          <CookieConsent /> {/* Add the consent banner here */}
         </div>
       </HelmetProvider>
   );

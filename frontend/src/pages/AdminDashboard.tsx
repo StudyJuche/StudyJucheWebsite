@@ -1,17 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getCourses, createCourse, addLessonToCourse, deleteCourse, deleteLesson, Course, CourseLessonCreate } from '../api/courses';
 import { getGhostPosts } from '../api/ghost';
 import { Notification } from '../components/Notification';
 import { ConfirmationDialog } from '../components/ConfirmationDialog';
 import { useAuth } from '../context/AuthContext';
 
-interface GhostPostForAdmin {
-  id: string;
-  title: string;
-  slug: string;
-}
-
-const CourseManager = ({ course, ghostPosts, onDataChange, setNotification, token }: { course: Course, ghostPosts: GhostPostForAdmin[], onDataChange: () => void, setNotification: (notification: { message: string, type: 'success' | 'error' } | null) => void, token: string }) => {
+const CourseManager = ({ course, ghostPosts, onDataChange, setNotification, token }: { course: Course, ghostPosts: any[], onDataChange: () => void, setNotification: (notification: { message: string, type: 'success' | 'error' } | null) => void, token: string }) => {
   const [selectedGhostPostSlug, setSelectedGhostPostSlug] = useState('');
   const [newLessonOrder, setNewLessonOrder] = useState('');
   const [addingLesson, setAddingLesson] = useState(false);
@@ -32,7 +26,6 @@ const CourseManager = ({ course, ghostPosts, onDataChange, setNotification, toke
       setNotification({ message: 'Lesson added successfully!', type: 'success' });
     } catch (err) {
       setNotification({ message: 'Failed to add lesson.', type: 'error' });
-      console.error(err);
     } finally {
       setAddingLesson(false);
     }
@@ -53,7 +46,6 @@ const CourseManager = ({ course, ghostPosts, onDataChange, setNotification, toke
       setNotification({ message: 'Lesson deleted successfully!', type: 'success' });
     } catch (err) {
       setNotification({ message: 'Failed to delete lesson.', type: 'error' });
-      console.error(err);
     } finally {
       setConfirmation(null);
     }
@@ -74,7 +66,6 @@ const CourseManager = ({ course, ghostPosts, onDataChange, setNotification, toke
       setNotification({ message: 'Course deleted successfully!', type: 'success' });
     } catch (err) {
       setNotification({ message: 'Failed to delete course.', type: 'error' });
-      console.error(err);
     } finally {
       setConfirmation(null);
     }
@@ -154,14 +145,17 @@ const CourseManager = ({ course, ghostPosts, onDataChange, setNotification, toke
 export const AdminDashboard = () => {
   const { token } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
-  const [ghostPosts, setGhostPosts] = useState<GhostPostForAdmin[]>([]);
+  const [ghostPosts, setGhostPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+  
   const [newCourseTitle, setNewCourseTitle] = useState('');
   const [newCourseDescription, setNewCourseDescription] = useState('');
   const [newCourseSlug, setNewCourseSlug] = useState('');
+  const [newCourseFile, setNewCourseFile] = useState<File | null>(null);
   const [creatingCourse, setCreatingCourse] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchAllData = async () => {
     if (!token) return;
@@ -175,7 +169,6 @@ export const AdminDashboard = () => {
       setGhostPosts(fetchedGhostPosts);
     } catch (err) {
       setError('Failed to load admin data.');
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -189,30 +182,44 @@ export const AdminDashboard = () => {
 
   useEffect(() => {
     if (notification) {
-      const timer = setTimeout(() => {
-        setNotification(null);
-      }, 5000);
+      const timer = setTimeout(() => setNotification(null), 5000);
       return () => clearTimeout(timer);
     }
   }, [notification]);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setNewCourseFile(e.target.files[0]);
+    }
+  };
+
   const handleCreateCourse = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token) {
-      setNotification({ message: 'Authentication error.', type: 'error' });
+    if (!token || !newCourseFile) {
+      setNotification({ message: 'Please fill out all fields and select an image.', type: 'error' });
       return;
     }
+
     setCreatingCourse(true);
+    const formData = new FormData();
+    formData.append('title', newCourseTitle);
+    formData.append('description', newCourseDescription);
+    formData.append('slug', newCourseSlug);
+    formData.append('file', newCourseFile);
+
     try {
-      await createCourse({ title: newCourseTitle, description: newCourseDescription, slug: newCourseSlug }, token);
+      await createCourse(formData, token);
+      
       setNewCourseTitle('');
       setNewCourseDescription('');
       setNewCourseSlug('');
+      setNewCourseFile(null);
+      if(fileInputRef.current) fileInputRef.current.value = "";
+
       fetchAllData();
       setNotification({ message: 'Course created successfully!', type: 'success' });
-    } catch (err) {
-      setNotification({ message: 'Failed to create course.', type: 'error' });
-      console.error(err);
+    } catch (err: any) {
+      setNotification({ message: err.message || 'Failed to create course.', type: 'error' });
     } finally {
       setCreatingCourse(false);
     }
@@ -237,6 +244,10 @@ export const AdminDashboard = () => {
           <input type="text" value={newCourseTitle} onChange={e => setNewCourseTitle(e.target.value)} placeholder="Course Title" className="w-full p-2 border rounded-md" required />
           <textarea value={newCourseDescription} onChange={e => setNewCourseDescription(e.target.value)} placeholder="Course Description" className="w-full p-2 border rounded-md" required />
           <input type="text" value={newCourseSlug} onChange={e => setNewCourseSlug(e.target.value)} placeholder="Course Slug (e.g., my-new-course)" className="w-full p-2 border rounded-md" required />
+          <div>
+            <label htmlFor="course-image" className="block text-sm font-medium text-gray-700 mb-1">Feature Image</label>
+            <input id="course-image" ref={fileInputRef} type="file" onChange={handleFileChange} className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100" required />
+          </div>
           <button type="submit" disabled={creatingCourse} className="w-full bg-red-800 text-white p-3 rounded-md font-semibold hover:bg-red-900 disabled:bg-gray-400">
             {creatingCourse ? 'Creating...' : 'Create Course'}
           </button>

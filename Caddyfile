@@ -1,8 +1,6 @@
 :8080 {
-    # The 'route' block ensures these rules are evaluated in this exact order.
     route {
-        # The 'handle' directive proxies requests that match a path,
-        # WITHOUT stripping the path. This is the correct directive.
+        # Handle all API calls first
         handle /api/* {
             reverse_proxy backend:8000
         }
@@ -16,8 +14,12 @@
             reverse_proxy backend:8000
         }
 
-        # As a final fallback, handle all other requests by sending them to the frontend.
-        # This MUST be the last block.
+        # Handle static file requests
+        handle /static/* {
+            reverse_proxy backend:8000
+        }
+
+        # As a fallback, handle all other requests
         handle {
             reverse_proxy frontend:8081
         }

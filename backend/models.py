@@ -20,6 +20,7 @@ class CourseBase(SQLModel):
     title: str
     description: str
     slug: str
+    feature_image_url: str
 
 class CourseLessonCreate(SQLModel):
     ghost_post_slug: str

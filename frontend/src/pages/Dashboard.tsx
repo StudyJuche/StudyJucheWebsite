@@ -15,15 +15,7 @@ const OverallProgressCircle = ({ percentage }: { percentage: number }) => {
   return (
     <div className="relative flex items-center justify-center w-40 h-40">
       <svg width={sqSize} height={sqSize} viewBox={viewBox}>
-        <circle
-          className="text-gray-200"
-          strokeWidth={strokeWidth}
-          stroke="currentColor"
-          fill="none"
-          cx={sqSize / 2}
-          cy={sqSize / 2}
-          r={radius}
-        />
+        <circle className="text-gray-200" strokeWidth={strokeWidth} stroke="currentColor" fill="none" cx={sqSize / 2} cy={sqSize / 2} r={radius} />
         <circle
           className="text-red-700"
           strokeWidth={strokeWidth}
@@ -59,7 +51,6 @@ export const Dashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       if (!token) return;
-
       try {
         setLoading(true);
         const [continueData, progressData] = await Promise.all([
@@ -74,7 +65,6 @@ export const Dashboard = () => {
         setLoading(false);
       }
     };
-
     fetchDashboardData();
   }, [token]);
 
@@ -86,31 +76,26 @@ export const Dashboard = () => {
     <div className="min-h-screen pt-20">
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="pb-5 border-b border-gray-200 sm:flex sm:items-center sm:justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Welcome back, {user?.username}!
-          </h1>
-          <div className="mt-3 sm:mt-0 sm:ml-4">
-            <Link
-              to="/courses"
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-700 hover:bg-red-800"
-            >
-              Browse All Courses
-            </Link>
-          </div>
+          <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user?.username}!</h1>
+          <Link to="/courses" className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-700 hover:bg-red-800 mt-3 sm:mt-0">
+            Browse All Courses
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content: Continue Learning */}
           <div className="lg:col-span-2">
             <div className="bg-white/90 backdrop-blur-sm p-8 rounded-lg shadow-lg">
               <h2 className="text-xl font-bold text-gray-900 mb-6">Continue Learning</h2>
               {continueCourse ? (
-                <div className="bg-gray-50 p-6 rounded-lg shadow">
-                  <h3 className="font-bold text-xl mb-2">{continueCourse.title}</h3>
-                  <p className="text-gray-600 mb-4">{continueCourse.description}</p>
-                  <Link to={`/courses/${continueCourse.slug}`} className="inline-block mt-4 bg-red-100 text-red-800 font-semibold px-4 py-2 rounded-md hover:bg-red-200">
-                    Jump Back In
-                  </Link>
+                <div className="bg-gray-50 rounded-lg shadow overflow-hidden flex flex-col md:flex-row">
+                  <img src={continueCourse.feature_image_url} alt={continueCourse.title} className="w-full md:w-1/3 h-48 md:h-auto object-cover" />
+                  <div className="p-6 flex flex-col justify-center">
+                    <h3 className="font-bold text-xl mb-2">{continueCourse.title}</h3>
+                    <p className="text-gray-600 mb-4 line-clamp-2">{continueCourse.description}</p>
+                    <Link to={`/courses/${continueCourse.slug}`} className="inline-block mt-2 bg-red-100 text-red-800 font-semibold px-4 py-2 rounded-md hover:bg-red-200 self-start">
+                      Jump Back In
+                    </Link>
+                  </div>
                 </div>
               ) : (
                 <div className="bg-gray-50 p-6 rounded-lg shadow text-center">
@@ -120,14 +105,13 @@ export const Dashboard = () => {
             </div>
           </div>
 
-          {/* Sidebar: Overall Progress */}
           <div className="lg:col-span-1">
             <div className="bg-white/90 backdrop-blur-sm p-8 rounded-lg shadow-lg flex flex-col items-center">
               <h2 className="text-xl font-bold text-gray-900 mb-6">Overall Progress</h2>
               {overallProgress && (
                 <>
                   <OverallProgressCircle percentage={overallProgress.percentage} />
-                  <p className="mt-4 text-gray-600">You've completed {overallProgress.completed} of {overallProgress.total} total lessons.</p>
+                  <p className="mt-4 text-center text-gray-600">You've completed {overallProgress.completed} of {overallProgress.total} total lessons.</p>
                 </>
               )}
             </div>

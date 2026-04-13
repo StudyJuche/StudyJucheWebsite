@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile, Form
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session, select
@@ -10,6 +10,7 @@ from models import (
 )
 import security
 import os
+import shutil
 from typing import List, Optional
 import requests
 from dotenv import load_dotenv
@@ -41,6 +42,7 @@ def create_admin_user(session: Session):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    os.makedirs("static/images/courses", exist_ok=True)
     create_db_and_tables()
     with Session(engine) as session:
         create_admin_user(session)
@@ -49,7 +51,6 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 # --- Static Files & Basic Routes ---
-os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # --- Authentication Endpoints ---
@@ -80,87 +81,58 @@ async def read_users_me(current_user: User = Depends(security.get_current_user))
 
 @app.get("/api/users/me/continue-learning", response_model=Optional[CourseRead], tags=["Users"])
 def get_continue_learning_course(current_user: User = Depends(security.get_current_user), session: Session = Depends(get_session)):
-    progress = session.exec(
-        select(UserCourseProgress)
-        .where(UserCourseProgress.user_id == current_user.id)
-        .where(UserCourseProgress.is_completed == False)
-        .order_by(UserCourseProgress.last_accessed_at.desc())
-    ).first()
-    if not progress:
-        return None
+    progress = session.exec(select(UserCourseProgress).where(UserCourseProgress.user_id == current_user.id, UserCourseProgress.is_completed == False).order_by(UserCourseProgress.last_accessed_at.desc())).first()
+    if not progress: return None
     return session.get(Course, progress.course_id)
 
 @app.get("/api/users/me/overall-progress", tags=["Users"])
 def get_overall_progress(current_user: User = Depends(security.get_current_user), session: Session = Depends(get_session)):
     total_lessons = session.exec(select(CourseLesson)).all()
-    if not total_lessons:
-        return {"total": 0, "completed": 0, "percentage": 0}
+    if not total_lessons: return {"total": 0, "completed": 0, "percentage": 0}
     completed_lessons = session.exec(select(UserLessonProgress).where(UserLessonProgress.user_id == current_user.id, UserLessonProgress.is_completed == True)).all()
-    total_count = len(total_lessons)
-    completed_count = len(completed_lessons)
-    percentage = (completed_count / total_count * 100) if total_count > 0 else 0
-    return {"total": total_count, "completed": completed_count, "percentage": percentage}
+    return {"total": len(total_lessons), "completed": len(completed_lessons), "percentage": (len(completed_lessons) / len(total_lessons) * 100) if total_lessons else 0}
 
 # --- Progress Endpoints ---
 @app.get("/api/progress/course/{course_id}", response_model=CourseProgress, tags=["Users"])
 def get_user_course_progress(course_id: int, current_user: User = Depends(security.get_current_user), session: Session = Depends(get_session)):
     course_lessons = session.exec(select(CourseLesson).where(CourseLesson.course_id == course_id)).all()
-    if not course_lessons:
-        return {"total_lessons": 0, "completed_lessons": 0, "percent_complete": 0, "lesson_progress": []}
-    
-    completed_progress = session.exec(select(UserLessonProgress).where(UserLessonProgress.user_id == current_user.id, UserLessonProgress.is_completed == True)).all()
-    completed_slugs = {p.ghost_post_slug for p in completed_progress}
-    
+    if not course_lessons: return {"total_lessons": 0, "completed_lessons": 0, "percent_complete": 0, "lesson_progress": []}
+    completed_slugs = {p.ghost_post_slug for p in session.exec(select(UserLessonProgress).where(UserLessonProgress.user_id == current_user.id, UserLessonProgress.is_completed == True)).all()}
     completed_count = sum(1 for lesson in course_lessons if lesson.ghost_post_slug in completed_slugs)
-    total_lessons = len(course_lessons)
-    percent_complete = (completed_count / total_lessons * 100) if total_lessons > 0 else 0
-    
-    lesson_progress = [{"lesson_id": lesson.id, "ghost_post_slug": lesson.ghost_post_slug, "is_completed": lesson.ghost_post_slug in completed_slugs, "order": lesson.order} for lesson in course_lessons]
-    
-    return {"total_lessons": total_lessons, "completed_lessons": completed_count, "percent_complete": percent_complete, "lesson_progress": lesson_progress}
+    return {"total_lessons": len(course_lessons), "completed_lessons": completed_count, "percent_complete": (completed_count / len(course_lessons) * 100) if course_lessons else 0, "lesson_progress": [{"lesson_id": lesson.id, "ghost_post_slug": lesson.ghost_post_slug, "is_completed": lesson.ghost_post_slug in completed_slugs, "order": lesson.order} for lesson in course_lessons]}
 
 @app.post("/api/progress/lesson/{ghost_post_slug}/complete", tags=["Users"])
 def mark_lesson_complete(ghost_post_slug: str, current_user: User = Depends(security.get_current_user), session: Session = Depends(get_session)):
     lesson = session.exec(select(CourseLesson).where(CourseLesson.ghost_post_slug == ghost_post_slug)).first()
     if lesson:
         course_progress = session.exec(select(UserCourseProgress).where(UserCourseProgress.user_id == current_user.id, UserCourseProgress.course_id == lesson.course_id)).first()
-        if course_progress:
-            course_progress.last_accessed_at = datetime.utcnow()
-            session.add(course_progress)
-        else:
-            new_course_progress = UserCourseProgress(user_id=current_user.id, course_id=lesson.course_id)
-            session.add(new_course_progress)
-
+        if course_progress: course_progress.last_accessed_at = datetime.utcnow()
+        else: course_progress = UserCourseProgress(user_id=current_user.id, course_id=lesson.course_id)
+        session.add(course_progress)
+    
     lesson_progress = session.exec(select(UserLessonProgress).where(UserLessonProgress.user_id == current_user.id, UserLessonProgress.ghost_post_slug == ghost_post_slug)).first()
-    if not lesson_progress:
-        lesson_progress = UserLessonProgress(user_id=current_user.id, ghost_post_slug=ghost_post_slug, is_completed=True)
+    if not lesson_progress: lesson_progress = UserLessonProgress(user_id=current_user.id, ghost_post_slug=ghost_post_slug)
     lesson_progress.is_completed = True
     session.add(lesson_progress)
     session.commit()
-    
-    return {"status": "success", "message": "Lesson marked as complete"}
+    return {"status": "success"}
 
 # --- Admin Endpoints ---
 @app.get("/api/ghost/posts", tags=["Admin"])
 def get_ghost_posts_for_admin(user: User = Depends(security.require_moderator)):
-    GHOST_URL = os.getenv("VITE_GHOST_URL")
-    GHOST_CONTENT_KEY = os.getenv("VITE_GHOST_CONTENT_KEY")
-    if not GHOST_URL or not GHOST_CONTENT_KEY:
-        raise HTTPException(status_code=500, detail="Ghost URL or Content API Key not configured.")
-    
-    filter_str = "tag:hash-lesson"
-    ghost_api_url = f"{GHOST_URL}/ghost/api/content/posts/?key={GHOST_CONTENT_KEY}&limit=all&fields=id,title,slug&filter={filter_str}"
-    
+    GHOST_URL, GHOST_CONTENT_KEY = os.getenv("VITE_GHOST_URL"), os.getenv("VITE_GHOST_CONTENT_KEY")
+    if not GHOST_URL or not GHOST_CONTENT_KEY: raise HTTPException(status_code=500, detail="Ghost env vars not set.")
     try:
-        response = requests.get(ghost_api_url)
-        response.raise_for_status()
-        return response.json().get("posts", [])
-    except requests.exceptions.RequestException as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch posts from Ghost: {e}")
+        res = requests.get(f"{GHOST_URL}/ghost/api/content/posts/?key={GHOST_CONTENT_KEY}&limit=all&fields=id,title,slug&filter=tag:hash-lesson")
+        res.raise_for_status()
+        return res.json().get("posts", [])
+    except requests.exceptions.RequestException as e: raise HTTPException(status_code=500, detail=f"Failed to fetch from Ghost: {e}")
 
 @app.post("/api/courses", response_model=Course, tags=["Admin"])
-def create_course(course: CourseBase, session: Session = Depends(get_session), user: User = Depends(security.require_moderator)):
-    db_course = Course.model_validate(course)
+def create_course(title: str = Form(...), description: str = Form(...), slug: str = Form(...), file: UploadFile = File(...), session: Session = Depends(get_session), user: User = Depends(security.require_moderator)):
+    file_path = f"static/images/courses/{file.filename}"
+    with open(file_path, "wb") as buffer: shutil.copyfileobj(file.file, buffer)
+    db_course = Course.model_validate(CourseBase(title=title, description=description, slug=slug, feature_image_url=f"/{file_path}"))
     session.add(db_course)
     session.commit()
     session.refresh(db_course)
@@ -169,23 +141,14 @@ def create_course(course: CourseBase, session: Session = Depends(get_session), u
 @app.delete("/api/courses/{course_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Admin"])
 def delete_course(course_id: int, session: Session = Depends(get_session), user: User = Depends(security.require_admin)):
     course = session.get(Course, course_id)
-    if not course:
-        raise HTTPException(status_code=404, detail="Course not found")
-    
-    lessons = session.exec(select(CourseLesson).where(CourseLesson.course_id == course_id)).all()
-    for lesson in lessons:
-        session.delete(lesson)
-        
+    if not course: raise HTTPException(status_code=404, detail="Course not found")
+    for lesson in session.exec(select(CourseLesson).where(CourseLesson.course_id == course_id)).all(): session.delete(lesson)
     session.delete(course)
     session.commit()
-    return
 
 @app.post("/api/courses/{course_id}/lessons", response_model=CourseLesson, tags=["Admin"])
 def add_lesson_to_course(course_id: int, lesson: CourseLessonCreate, session: Session = Depends(get_session), user: User = Depends(security.require_moderator)):
-    course = session.get(Course, course_id)
-    if not course:
-        raise HTTPException(status_code=404, detail="Course not found")
-    
+    if not session.get(Course, course_id): raise HTTPException(status_code=404, detail="Course not found")
     db_lesson = CourseLesson.model_validate(lesson, update={"course_id": course_id})
     session.add(db_lesson)
     session.commit()
@@ -195,54 +158,32 @@ def add_lesson_to_course(course_id: int, lesson: CourseLessonCreate, session: Se
 @app.delete("/api/lessons/{lesson_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Admin"])
 def delete_lesson(lesson_id: int, session: Session = Depends(get_session), user: User = Depends(security.require_moderator)):
     lesson = session.get(CourseLesson, lesson_id)
-    if not lesson:
-        raise HTTPException(status_code=404, detail="Lesson not found")
+    if not lesson: raise HTTPException(status_code=404, detail="Lesson not found")
     session.delete(lesson)
     session.commit()
-    return
 
 # --- Public Endpoints ---
 @app.get("/api/courses", response_model=List[CourseReadWithLessons], tags=["Public"])
 def get_courses(session: Session = Depends(get_session)):
-    courses = session.exec(select(Course).options(selectinload(Course.lessons))).all()
-    return courses
+    return session.exec(select(Course).options(selectinload(Course.lessons))).all()
 
 @app.get("/api/courses/{slug}", tags=["Public"])
 def get_course_details(slug: str, session: Session = Depends(get_session)):
     course = session.exec(select(Course).where(Course.slug == slug)).first()
-    if not course:
-        raise HTTPException(status_code=404, detail="Course not found")
+    if not course: raise HTTPException(status_code=404, detail="Course not found")
     lessons = session.exec(select(CourseLesson).where(CourseLesson.course_id == course.id).order_by(CourseLesson.order)).all()
     return {"course": course, "lessons": lessons}
 
 # --- YOUTUBE FEED ENDPOINT ---
 youtube_cache = {"timestamp": 0, "videos": []}
 CACHE_DURATION = 3600
-
 @app.get("/api/youtube/latest", tags=["Public"])
 def get_latest_youtube_videos():
     now = time.time()
-    if now - youtube_cache["timestamp"] < CACHE_DURATION and youtube_cache["videos"]:
-        return youtube_cache["videos"]
-
-    channel_id = "UCnsmyPvWfq7XAnRmmMwKu2g"
-    feed_url = f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
-    
+    if now - youtube_cache["timestamp"] < CACHE_DURATION and youtube_cache["videos"]: return youtube_cache["videos"]
     try:
-        feed = feedparser.parse(feed_url)
-        videos = []
-        for entry in feed.entries[:4]:
-            video_id = entry.yt_videoid
-            videos.append({
-                "id": video_id,
-                "title": entry.title,
-                "link": entry.link,
-                "thumbnail": f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg"
-            })
-        
-        youtube_cache["timestamp"] = now
-        youtube_cache["videos"] = videos
-        
+        feed = feedparser.parse(f"https://www.youtube.com/feeds/videos.xml?channel_id=UCnsmyPvWfq7XAnRmmMwKu2g")
+        videos = [{"id": entry.yt_videoid, "title": entry.title, "link": entry.link, "thumbnail": f"https://i.ytimg.com/vi/{entry.yt_videoid}/hqdefault.jpg"} for entry in feed.entries[:4]]
+        youtube_cache.update({"timestamp": now, "videos": videos})
         return videos
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to parse YouTube RSS feed: {e}")
+    except Exception as e: raise HTTPException(status_code=500, detail=f"Failed to parse YouTube RSS feed: {e}")

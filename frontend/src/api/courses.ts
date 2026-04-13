@@ -3,6 +3,7 @@ export interface Course {
   title: string;
   description: string;
   slug: string;
+  feature_image_url: string; // Added field
   lessons: CourseLesson[];
 }
 
@@ -32,10 +33,15 @@ export interface CourseProgress {
 
 const API_BASE_URL = '/api';
 
-const getAuthHeaders = (token: string) => ({
-  'Content-Type': 'application/json',
-  'Authorization': `Bearer ${token}`,
-});
+const getAuthHeaders = (token: string, contentType: string = 'application/json') => {
+  const headers: Record<string, string> = {
+    'Authorization': `Bearer ${token}`,
+  };
+  if (contentType) {
+    headers['Content-Type'] = contentType;
+  }
+  return headers;
+};
 
 // Public - No Auth Needed
 export const getCourses = async (): Promise<Course[]> => {
@@ -53,13 +59,16 @@ export const getCourseDetails = async (slug: string): Promise<{ course: Course; 
 
 // --- Authenticated Functions ---
 
-export const createCourse = async (courseData: { title: string; description: string; slug: string }, token: string): Promise<Course> => {
+export const createCourse = async (formData: FormData, token: string): Promise<Course> => {
   const res = await fetch(`${API_BASE_URL}/courses`, {
     method: 'POST',
-    headers: getAuthHeaders(token),
-    body: JSON.stringify(courseData),
+    headers: { 'Authorization': `Bearer ${token}` }, // Content-Type is set by the browser for FormData
+    body: formData,
   });
-  if (!res.ok) throw new Error("Failed to create course");
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ detail: "Failed to create course" }));
+    throw new Error(errorData.detail);
+  }
   return res.json();
 };
 
@@ -91,7 +100,7 @@ export const deleteLesson = async (lessonId: number, token: string): Promise<voi
 
 export const getCourseProgress = async (courseId: number, token: string): Promise<CourseProgress> => {
   const res = await fetch(`${API_BASE_URL}/progress/course/${courseId}`, {
-    headers: getAuthHeaders(token),
+    headers: getAuthHeaders(token, ''), // No Content-Type needed for GET
   });
   if (!res.ok) throw new Error("Failed to fetch course progress");
   return res.json();

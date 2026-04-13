@@ -50,18 +50,23 @@ export const Courses = () => {
     }
 
     return (
-      <div className="space-y-8">
+      <div className="space-y-12">
         {courses.map((course) => (
-          <div key={course.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
-            <div className="p-8">
+          <div key={course.id} className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col md:flex-row">
+            <div className="md:w-1/3">
+              <img src={course.feature_image_url} alt={course.title} className="w-full h-48 md:h-full object-cover" />
+            </div>
+            <div className="md:w-2/3 p-8 flex flex-col justify-center">
               <h2 className="text-3xl font-bold text-gray-900 mb-3">{course.title}</h2>
               <p className="text-gray-700 text-lg mb-6">{course.description}</p>
-              <Link 
-                to={`/courses/${course.slug}`} 
-                className="inline-block bg-red-700 hover:bg-red-800 text-white font-bold py-3 px-6 rounded-lg text-md transition-colors"
-              >
-                View Curriculum
-              </Link>
+              <div className="mt-auto">
+                <Link 
+                  to={`/courses/${course.slug}`} 
+                  className="inline-block bg-red-700 hover:bg-red-800 text-white font-bold py-3 px-6 rounded-lg text-md transition-colors"
+                >
+                  View Curriculum
+                </Link>
+              </div>
             </div>
           </div>
         ))}
@@ -70,7 +75,7 @@ export const Courses = () => {
   };
 
   return (
-    <div className="min-h-screen pt-20 bg-site-tile bg-repeat bg-auto"> {/* Add background class */}
+    <div className="min-h-screen pt-20 bg-site-tile bg-repeat bg-auto">
       <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h1 

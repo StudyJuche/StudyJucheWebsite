@@ -67,3 +67,37 @@ export const fetchCurrentUser = async (token: string): Promise<UserRead> => {
   }
   return res.json();
 };
+
+export const changePassword = async (token: string, currentPassword: string, newPassword: string): Promise<void> => {
+  const res = await fetch(`${API_BASE_URL}api/users/me/password`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.detail || 'Failed to change password');
+  }
+  // No content on success (204 No Content)
+};
+
+export const deleteUserAccount = async (token: string, username: string, password: string): Promise<void> => {
+  const res = await fetch(`${API_BASE_URL}api/users/me`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ username, password }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.detail || 'Failed to delete account');
+  }
+  // No content on success (204 No Content)
+};

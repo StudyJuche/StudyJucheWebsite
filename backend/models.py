@@ -16,6 +16,14 @@ class UserBase(SQLModel):
 class UserCreate(UserBase):
     password: str
 
+class UserPasswordChange(SQLModel): # New model for password change
+    current_password: str
+    new_password: str
+
+class UserDeleteConfirmation(SQLModel): # New model for account deletion confirmation
+    username: str
+    password: str
+
 class CourseBase(SQLModel):
     title: str
     description: str

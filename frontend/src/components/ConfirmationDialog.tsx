@@ -1,21 +1,23 @@
 import React from 'react';
 
 interface ConfirmationDialogProps {
-  isOpen: boolean;
+  show: boolean; // Changed from isOpen to show
   title: string;
-  message: string;
+  message: React.ReactNode; // Changed type to React.ReactNode
   onConfirm: () => void;
   onCancel: () => void;
+  confirmButtonText?: string; // New prop
+  confirmButtonClass?: string; // New prop
 }
 
-export const ConfirmationDialog = ({ isOpen, title, message, onConfirm, onCancel }: ConfirmationDialogProps) => {
-  if (!isOpen) return null;
+export const ConfirmationDialog = ({ show, title, message, onConfirm, onCancel, confirmButtonText = 'Confirm', confirmButtonClass = 'bg-red-600 hover:bg-red-700' }: ConfirmationDialogProps) => {
+  if (!show) return null; // Use 'show' prop
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
         <h2 className="text-2xl font-bold mb-4 text-gray-800">{title}</h2>
-        <p className="text-gray-600 mb-6">{message}</p>
+        <div className="text-gray-600 mb-6">{message}</div> {/* Render message as React.ReactNode */}
         <div className="flex justify-end space-x-4">
           <button
             onClick={onCancel}
@@ -25,9 +27,9 @@ export const ConfirmationDialog = ({ isOpen, title, message, onConfirm, onCancel
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 font-semibold"
+            className={`px-4 py-2 rounded-md text-white font-semibold ${confirmButtonClass}`} // Use confirmButtonClass
           >
-            Confirm
+            {confirmButtonText} {/* Use confirmButtonText */}
           </button>
         </div>
       </div>

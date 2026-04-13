@@ -30,6 +30,7 @@ const UserMenu = () => {
           {hasRole('moderator') && (
             <Link to="/admin" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Admin Panel</Link>
           )}
+          <Link to="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</Link> {/* Added Settings link */}
           <div className="border-t my-1"></div>
           <Link to="/courses" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Courses</Link>
           <Link to="/articles" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Articles</Link>
@@ -48,7 +49,7 @@ const UserMenu = () => {
 };
 
 export const TopHeader = () => {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, hasRole } = useAuth(); // Added hasRole here for mobile menu
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
 
@@ -131,6 +132,10 @@ export const TopHeader = () => {
             {isAuthenticated ? (
               <>
                 <Link to="/dashboard" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-red-800 hover:bg-gray-50">Dashboard</Link>
+                {hasRole('moderator') && ( // Added admin panel to mobile menu
+                  <Link to="/admin" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-red-800 hover:bg-gray-50">Admin Panel</Link>
+                )}
+                <Link to="/settings" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-red-800 hover:bg-gray-50">Settings</Link> {/* Added Settings link to mobile menu */}
                 <Link to="/about" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-red-800 hover:bg-gray-50">About</Link>
                 <Link to="/community" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-red-800 hover:bg-gray-50">Community</Link>
                 <Link to="/contact" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-red-800 hover:bg-gray-50">Contact</Link>

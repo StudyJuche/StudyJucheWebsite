@@ -6,7 +6,8 @@ from contextlib import asynccontextmanager
 from database import create_db_and_tables, get_session, engine
 from models import (
     Course, CourseLesson, User, UserRole, CourseBase, CourseLessonCreate, 
-    CourseReadWithLessons, UserCreate, UserRead, UserLessonProgress, CourseProgress, CourseRead, UserCourseProgress
+    CourseReadWithLessons, UserCreate, UserRead, UserLessonProgress, CourseProgress, CourseRead, UserCourseProgress,
+    UserPasswordChange, UserDeleteConfirmation # Import new models
 )
 import security
 import os
@@ -79,6 +80,39 @@ def register_user(user: UserCreate, session: Session = Depends(get_session)):
 @app.get("/users/me", response_model=UserRead, tags=["Users"])
 async def read_users_me(current_user: User = Depends(security.get_current_user)):
     return current_user
+
+@app.patch("/api/users/me/password", status_code=status.HTTP_204_NO_CONTENT, tags=["Users"])
+def change_user_password(
+    password_change: UserPasswordChange,
+    current_user: User = Depends(security.get_current_user),
+    session: Session = Depends(get_session)
+):
+    if not security.verify_password(password_change.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect current password")
+    
+    if password_change.current_password == password_change.new_password:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="New password cannot be the same as the current password")
+
+    current_user.hashed_password = security.get_password_hash(password_change.new_password)
+    session.add(current_user)
+    session.commit()
+    return
+
+@app.delete("/api/users/me", status_code=status.HTTP_204_NO_CONTENT, tags=["Users"])
+def delete_user_account(
+    confirmation: UserDeleteConfirmation,
+    current_user: User = Depends(security.get_current_user),
+    session: Session = Depends(get_session)
+):
+    if confirmation.username != current_user.username:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Provided username does not match current user")
+    
+    if not security.verify_password(confirmation.password, current_user.hashed_password):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect password")
+    
+    session.delete(current_user)
+    session.commit()
+    return
 
 @app.get("/api/users/me/continue-learning", response_model=Optional[CourseRead], tags=["Users"])
 def get_continue_learning_course(current_user: User = Depends(security.get_current_user), session: Session = Depends(get_session)):

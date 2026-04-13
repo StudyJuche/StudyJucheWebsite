@@ -13,6 +13,7 @@ import { CourseLessonDetail } from "./pages/CourseLessonDetail.tsx";
 import { AdminDashboard } from "./pages/AdminDashboard.tsx";
 import { Page } from "./pages/Page.tsx";
 import { SearchResults } from './pages/SearchResults.tsx'; // Import new component
+import { UserSettings } from './pages/UserSettings.tsx'; // Import UserSettings component
 
 const ProtectedRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -44,6 +45,7 @@ export const AppRoutes = () => {
       {/* Protected Routes */}
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/settings" element={<UserSettings />} /> {/* Add User Settings route */}
       </Route>
 
       {/* Admin & Moderator Routes */}

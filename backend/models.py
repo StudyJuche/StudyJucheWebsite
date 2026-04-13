@@ -38,9 +38,6 @@ class CourseLessonRead(CourseLessonCreate):
 class CourseRead(CourseBase):
     id: int
 
-class CourseReadWithLessons(CourseRead):
-    lessons: List[CourseLessonRead] = []
-
 class LessonProgress(SQLModel):
     lesson_id: int
     ghost_post_slug: str
@@ -51,7 +48,12 @@ class CourseProgress(SQLModel):
     total_lessons: int
     completed_lessons: int
     percent_complete: float
-    lesson_progress: List[LessonProgress]
+    is_completed: Optional[bool] = None # Added for overall course completion status
+    lesson_progress: List[LessonProgress] = [] # Make optional with default empty list
+
+class CourseReadWithLessons(CourseRead):
+    lessons: List[CourseLessonRead] = []
+    progress: Optional[CourseProgress] = None # Added to include user's progress for the course
 
 # --- Database Table Models ---
 class User(UserBase, table=True):

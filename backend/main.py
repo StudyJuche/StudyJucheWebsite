@@ -90,33 +90,132 @@ def get_continue_learning_course(current_user: User = Depends(security.get_curre
 def get_overall_progress(current_user: User = Depends(security.get_current_user), session: Session = Depends(get_session)):
     total_lessons = session.exec(select(CourseLesson)).all()
     if not total_lessons: return {"total": 0, "completed": 0, "percentage": 0}
-    completed_lessons = session.exec(select(UserLessonProgress).where(UserLessonProgress.user_id == current_user.id, UserLessonProgress.is_completed == True)).all()
-    return {"total": len(total_lessons), "completed": len(completed_lessons), "percentage": (len(completed_lessons) / len(total_lessons) * 100) if total_lessons else 0}
+    
+    valid_lesson_slugs = {lesson.ghost_post_slug for lesson in total_lessons}
+    completed_lessons_query = select(UserLessonProgress).where(
+        UserLessonProgress.user_id == current_user.id,
+        UserLessonProgress.is_completed == True,
+        UserLessonProgress.ghost_post_slug.in_(valid_lesson_slugs)
+    )
+    completed_lessons_count = len(session.exec(completed_lessons_query).all())
+    
+    total_lessons_count = len(total_lessons)
+    percentage = (completed_lessons_count / total_lessons_count * 100) if total_lessons_count > 0 else 0
+
+    return {"total": total_lessons_count, "completed": completed_lessons_count, "percentage": percentage}
 
 # --- Progress Endpoints ---
+@app.get("/api/progress/all-courses", response_model=List[CourseReadWithLessons], tags=["Users"])
+def get_all_courses_with_progress(current_user: User = Depends(security.get_current_user), session: Session = Depends(get_session)):
+    courses = session.exec(select(Course).options(selectinload(Course.lessons))).all()
+    all_lesson_progress = session.exec(select(UserLessonProgress).where(UserLessonProgress.user_id == current_user.id, UserLessonProgress.is_completed == True)).all()
+    completed_slugs = {p.ghost_post_slug for p in all_lesson_progress}
+
+    all_course_progress = session.exec(select(UserCourseProgress).where(UserCourseProgress.user_id == current_user.id)).all()
+    course_progress_map = {p.course_id: p for p in all_course_progress}
+
+    enriched_courses = []
+    for course in courses:
+        completed_count = sum(1 for lesson in course.lessons if lesson.ghost_post_slug in completed_slugs)
+        total_lessons = len(course.lessons)
+        percent_complete = (completed_count / total_lessons * 100) if total_lessons > 0 else 0
+        
+        course_dict = course.model_dump()
+        course_dict['progress'] = {
+            "total_lessons": total_lessons,
+            "completed_lessons": completed_count,
+            "percent_complete": percent_complete
+        }
+        
+        user_course_progress = course_progress_map.get(course.id)
+        if user_course_progress:
+            course_dict['progress']['is_completed'] = user_course_progress.is_completed
+        else:
+            course_dict['progress']['is_completed'] = False
+
+        enriched_courses.append(course_dict)
+
+    return enriched_courses
+
 @app.get("/api/progress/course/{course_id}", response_model=CourseProgress, tags=["Users"])
 def get_user_course_progress(course_id: int, current_user: User = Depends(security.get_current_user), session: Session = Depends(get_session)):
     course_lessons = session.exec(select(CourseLesson).where(CourseLesson.course_id == course_id)).all()
     if not course_lessons: return {"total_lessons": 0, "completed_lessons": 0, "percent_complete": 0, "lesson_progress": []}
-    completed_slugs = {p.ghost_post_slug for p in session.exec(select(UserLessonProgress).where(UserLessonProgress.user_id == current_user.id, UserLessonProgress.is_completed == True)).all()}
+    
+    user_lesson_progress_records = session.exec(select(UserLessonProgress).where(UserLessonProgress.user_id == current_user.id, UserLessonProgress.is_completed == True)).all()
+    completed_slugs = {p.ghost_post_slug for p in user_lesson_progress_records}
+    
     completed_count = sum(1 for lesson in course_lessons if lesson.ghost_post_slug in completed_slugs)
-    return {"total_lessons": len(course_lessons), "completed_lessons": completed_count, "percent_complete": (completed_count / len(course_lessons) * 100) if course_lessons else 0, "lesson_progress": [{"lesson_id": lesson.id, "ghost_post_slug": lesson.ghost_post_slug, "is_completed": lesson.ghost_post_slug in completed_slugs, "order": lesson.order} for lesson in course_lessons]}
+    
+    lesson_progress_details = []
+    for lesson in course_lessons:
+        lesson_progress_details.append({
+            "lesson_id": lesson.id,
+            "ghost_post_slug": lesson.ghost_post_slug,
+            "is_completed": lesson.ghost_post_slug in completed_slugs,
+            "order": lesson.order
+        })
+
+    percent_complete = (completed_count / len(course_lessons) * 100) if course_lessons else 0
+
+    return {
+        "total_lessons": len(course_lessons),
+        "completed_lessons": completed_count,
+        "percent_complete": percent_complete,
+        "lesson_progress": lesson_progress_details
+    }
 
 @app.post("/api/progress/lesson/{ghost_post_slug}/complete", tags=["Users"])
 def mark_lesson_complete(ghost_post_slug: str, current_user: User = Depends(security.get_current_user), session: Session = Depends(get_session)):
     lesson = session.exec(select(CourseLesson).where(CourseLesson.ghost_post_slug == ghost_post_slug)).first()
-    if lesson:
-        course_progress = session.exec(select(UserCourseProgress).where(UserCourseProgress.user_id == current_user.id, UserCourseProgress.course_id == lesson.course_id)).first()
-        if course_progress: course_progress.last_accessed_at = datetime.utcnow()
-        else: course_progress = UserCourseProgress(user_id=current_user.id, course_id=lesson.course_id)
-        session.add(course_progress)
-    
-    lesson_progress = session.exec(select(UserLessonProgress).where(UserLessonProgress.user_id == current_user.id, UserLessonProgress.ghost_post_slug == ghost_post_slug)).first()
-    if not lesson_progress: lesson_progress = UserLessonProgress(user_id=current_user.id, ghost_post_slug=ghost_post_slug)
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    # Update UserLessonProgress
+    lesson_progress = session.exec(select(UserLessonProgress).where(
+        UserLessonProgress.user_id == current_user.id,
+        UserLessonProgress.ghost_post_slug == ghost_post_slug
+    )).first()
+    if not lesson_progress:
+        lesson_progress = UserLessonProgress(user_id=current_user.id, ghost_post_slug=ghost_post_slug)
     lesson_progress.is_completed = True
     session.add(lesson_progress)
     session.commit()
-    return {"status": "success"}
+
+    # Update UserCourseProgress and check for course completion
+    course_progress = session.exec(select(UserCourseProgress).where(
+        UserCourseProgress.user_id == current_user.id,
+        UserCourseProgress.course_id == lesson.course_id
+    )).first()
+
+    if not course_progress:
+        course_progress = UserCourseProgress(user_id=current_user.id, course_id=lesson.course_id)
+    
+    course_progress.last_accessed_at = datetime.utcnow()
+
+    # Check if all lessons in the course are completed using sets of slugs
+    all_course_lessons = session.exec(select(CourseLesson).where(CourseLesson.course_id == lesson.course_id)).all()
+    all_lesson_slugs_in_course = {l.ghost_post_slug for l in all_course_lessons}
+
+    if not all_lesson_slugs_in_course:
+        course_progress.is_completed = False
+    else:
+        completed_lesson_records = session.exec(select(UserLessonProgress).where(
+            UserLessonProgress.user_id == current_user.id,
+            UserLessonProgress.ghost_post_slug.in_(all_lesson_slugs_in_course),
+            UserLessonProgress.is_completed == True
+        )).all()
+        completed_slugs_in_course = {p.ghost_post_slug for p in completed_lesson_records}
+
+        if all_lesson_slugs_in_course == completed_slugs_in_course:
+            course_progress.is_completed = True
+        else:
+            course_progress.is_completed = False
+
+    session.add(course_progress)
+    session.commit()
+
+    return {"status": "success", "is_course_completed": course_progress.is_completed}
 
 # --- Admin Endpoints ---
 @app.get("/api/ghost/posts", tags=["Admin"])
@@ -192,51 +291,23 @@ def get_latest_youtube_videos():
 # --- Search Endpoint ---
 @app.get("/api/search", tags=["Search"])
 def search_site(query: str, session: Session = Depends(get_session)):
-    """Searches courses, articles (non-lesson posts), and pages."""
-    
-    # Search local database courses
-    db_courses = session.exec(
-        select(Course).where(
-            or_(
-                Course.title.ilike(f"%{query}%"),
-                Course.description.ilike(f"%{query}%")
-            )
-        )
-    ).all()
-    
-    results = {
-        "courses": [{"title": c.title, "url": f"/courses/{c.slug}", "description": c.description} for c in db_courses],
-        "articles": [],
-        "pages": []
-    }
-    
-    GHOST_URL = os.getenv("VITE_GHOST_URL")
-    GHOST_CONTENT_KEY = os.getenv("VITE_GHOST_CONTENT_KEY")
-    if not GHOST_URL or not GHOST_CONTENT_KEY:
-        return results
-
+    db_courses = session.exec(select(Course).where(or_(Course.title.ilike(f"%{query}%"), Course.description.ilike(f"%{query}%")))).all()
+    results = {"courses": [{"title": c.title, "url": f"/courses/{c.slug}", "description": c.description} for c in db_courses], "articles": [], "pages": []}
+    GHOST_URL, GHOST_CONTENT_KEY = os.getenv("VITE_GHOST_URL"), os.getenv("VITE_GHOST_CONTENT_KEY")
+    if not GHOST_URL or not GHOST_CONTENT_KEY: return results
     headers = {'Accept-Version': 'v5.0'}
-    
     try:
-        posts_url = f"{GHOST_URL}/ghost/api/content/posts/?key={GHOST_CONTENT_KEY}&filter=tag:-hash-lesson"
-        res_posts = requests.get(posts_url, headers=headers)
+        res_posts = requests.get(f"{GHOST_URL}/ghost/api/content/posts/?key={GHOST_CONTENT_KEY}&filter=tag:-hash-lesson", headers=headers)
         res_posts.raise_for_status()
-        all_articles = res_posts.json().get("posts", [])
-        for article in all_articles:
+        for article in res_posts.json().get("posts", []):
             if query.lower() in article.get('title', '').lower() or query.lower() in article.get('excerpt', '').lower():
                 results["articles"].append({"title": article.get('title'), "url": f"/articles/{article.get('slug')}", "description": article.get('excerpt')})
-    except requests.exceptions.RequestException as e:
-        print(f"Could not fetch Ghost posts for search: {e}")
-
+    except requests.exceptions.RequestException as e: print(f"Could not fetch Ghost posts for search: {e}")
     try:
-        pages_url = f"{GHOST_URL}/ghost/api/content/pages/?key={GHOST_CONTENT_KEY}"
-        res_pages = requests.get(pages_url, headers=headers)
+        res_pages = requests.get(f"{GHOST_URL}/ghost/api/content/pages/?key={GHOST_CONTENT_KEY}", headers=headers)
         res_pages.raise_for_status()
-        all_pages = res_pages.json().get("pages", [])
-        for page in all_pages:
+        for page in res_pages.json().get("pages", []):
             if query.lower() in page.get('title', '').lower() or query.lower() in page.get('excerpt', '').lower():
                 results["pages"].append({"title": page.get('title'), "url": f"/{page.get('slug')}", "description": page.get('excerpt')})
-    except requests.exceptions.RequestException as e:
-        print(f"Could not fetch Ghost pages for search: {e}")
-        
+    except requests.exceptions.RequestException as e: print(f"Could not fetch Ghost pages for search: {e}")
     return results

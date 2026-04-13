@@ -3,8 +3,9 @@ export interface Course {
   title: string;
   description: string;
   slug: string;
-  feature_image_url: string; // Added field
+  feature_image_url: string;
   lessons: CourseLesson[];
+  progress?: CourseProgress; // Optional progress field
 }
 
 export interface CourseLesson {
@@ -23,7 +24,8 @@ export interface CourseProgress {
   total_lessons: number;
   completed_lessons: number;
   percent_complete: number;
-  lesson_progress: {
+  is_completed?: boolean; // For overall course completion
+  lesson_progress?: { // Make optional for summary
     lesson_id: number;
     ghost_post_slug: string;
     is_completed: boolean;
@@ -34,12 +36,8 @@ export interface CourseProgress {
 const API_BASE_URL = '/api';
 
 const getAuthHeaders = (token: string, contentType: string = 'application/json') => {
-  const headers: Record<string, string> = {
-    'Authorization': `Bearer ${token}`,
-  };
-  if (contentType) {
-    headers['Content-Type'] = contentType;
-  }
+  const headers: Record<string, string> = { 'Authorization': `Bearer ${token}` };
+  if (contentType) headers['Content-Type'] = contentType;
   return headers;
 };
 
@@ -59,10 +57,18 @@ export const getCourseDetails = async (slug: string): Promise<{ course: Course; 
 
 // --- Authenticated Functions ---
 
+export const getAllCoursesWithProgress = async (token: string): Promise<Course[]> => {
+  const res = await fetch(`${API_BASE_URL}/progress/all-courses`, {
+    headers: getAuthHeaders(token, ''),
+  });
+  if (!res.ok) throw new Error("Failed to fetch courses with progress");
+  return res.json();
+};
+
 export const createCourse = async (formData: FormData, token: string): Promise<Course> => {
   const res = await fetch(`${API_BASE_URL}/courses`, {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${token}` }, // Content-Type is set by the browser for FormData
+    headers: { 'Authorization': `Bearer ${token}` },
     body: formData,
   });
   if (!res.ok) {
@@ -100,7 +106,7 @@ export const deleteLesson = async (lessonId: number, token: string): Promise<voi
 
 export const getCourseProgress = async (courseId: number, token: string): Promise<CourseProgress> => {
   const res = await fetch(`${API_BASE_URL}/progress/course/${courseId}`, {
-    headers: getAuthHeaders(token, ''), // No Content-Type needed for GET
+    headers: getAuthHeaders(token, ''),
   });
   if (!res.ok) throw new Error("Failed to fetch course progress");
   return res.json();

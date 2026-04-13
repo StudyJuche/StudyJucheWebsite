@@ -98,6 +98,8 @@ export const CourseDetail = () => {
     return <UnknownPage />;
   }
 
+  const isCourseCompleted = progress?.percent_complete === 100;
+
   return (
     <div className="min-h-screen pt-20 bg-site-tile bg-repeat bg-auto">
       <div 
@@ -142,6 +144,12 @@ export const CourseDetail = () => {
 
             <div>
                 <h2 className="text-2xl font-bold mb-6 text-gray-800">Syllabus</h2>
+                {isCourseCompleted && (
+                  <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6" role="alert">
+                    <p className="font-bold">Course Completed!</p>
+                    <p>Congratulations! You have completed all lessons in this course.</p>
+                  </div>
+                )}
                 <div className="space-y-4">
                     {lessons.map((lesson, index) => (
                         <Link 

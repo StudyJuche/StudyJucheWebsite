@@ -51,7 +51,7 @@ const CoreCourses = () => (
           </div>
           <h3 className="text-2xl font-bold text-gray-900 mb-3">Core Principles</h3>
           <p className="text-gray-600 mb-6">A deep dive in the philosophy of Juche.</p>
-          <Link to="#" className="font-semibold text-red-600 hover:text-red-800">Learn More &rarr;</Link>
+          <Link to="/courses/core-principles" className="font-semibold text-red-600 hover:text-red-800">Learn More &rarr;</Link>
         </div>
         {/* Course 2 */}
         <div className="relative bg-white p-8 pt-16 rounded-lg shadow-lg border-4 border-blue-600 text-center">
@@ -60,7 +60,7 @@ const CoreCourses = () => (
           </div>
           <h3 className="text-2xl font-bold text-gray-900 mb-3">Political Independence</h3>
           <p className="text-gray-600 mb-6">Exploring the theory of sovereign socialism.</p>
-          <Link to="#" className="font-semibold text-blue-600 hover:text-blue-800">Learn More &rarr;</Link>
+          <Link to="/courses/political-independence" className="font-semibold text-blue-600 hover:text-blue-800">Learn More &rarr;</Link>
         </div>
         {/* Course 3 */}
         <div className="relative bg-white p-8 pt-16 rounded-lg shadow-lg border-4 border-red-600 text-center">
@@ -69,7 +69,7 @@ const CoreCourses = () => (
           </div>
           <h3 className="text-2xl font-bold text-gray-900 mb-3">Economic Self-Reliance</h3>
           <p className="text-gray-600 mb-6">The model for independent self-sustaining economics.</p>
-          <Link to="#" className="font-semibold text-red-600 hover:text-red-800">Learn More &rarr;</Link>
+          <Link to="/courses/economic-self-reliance" className="font-semibold text-red-600 hover:text-red-800">Learn More &rarr;</Link>
         </div>
       </div>
     </div>

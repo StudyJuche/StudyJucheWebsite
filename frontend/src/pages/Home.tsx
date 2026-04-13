@@ -143,6 +143,51 @@ const FeaturedContent = () => {
   );
 };
 
+const UsefulWebsites = () => (
+  <div className="py-16 bg-gray-50">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">Useful Resources</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+        {/* Website 1 */}
+        <div className="bg-white p-6 rounded-lg shadow-lg text-center flex flex-col justify-between">
+          <div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">korean-books.kp</h3>
+            <p className="text-gray-600 text-sm mb-4">A site with many resources about DPRK and Juche theory.</p>
+          </div>
+          <a href="http://korean-books.kp" target="_blank" rel="noopener noreferrer" className="inline-block font-semibold text-red-700 hover:underline mt-auto">Visit Site &rarr;</a>
+        </div>
+        {/* Website 2 */}
+        <div className="bg-white p-6 rounded-lg shadow-lg text-center flex flex-col justify-between">
+          <div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">rodong.rep.kp</h3>
+            <p className="text-gray-600 text-sm mb-4">The official publication of the Worker's Party of Korea.</p>
+          </div>
+          <a href="http://rodong.rep.kp" target="_blank" rel="noopener noreferrer" className="inline-block font-semibold text-red-700 hover:underline mt-auto">Visit Site &rarr;</a>
+        </div>
+        {/* Website 3 */}
+        <div className="bg-white p-6 rounded-lg shadow-lg text-center flex flex-col justify-between">
+          <div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">dprkportal.kp</h3>
+            <p className="text-gray-600 text-sm mb-4">A search portal for all things related to DPRK.</p>
+          </div>
+          <a href="http://dprkportal.kp" target="_blank" rel="noopener noreferrer" className="inline-block font-semibold text-red-700 hover:underline mt-auto">Visit Site &rarr;</a>
+        </div>
+        {/* Website 4 */}
+        <div className="bg-white p-6 rounded-lg shadow-lg text-center flex flex-col justify-between">
+          <div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">korea-dpr.com</h3>
+            <p className="text-gray-600 text-sm mb-4">The homepage of the Korean Friendship Association.</p>
+          </div>
+          <a href="http://korea-dpr.com" target="_blank" rel="noopener noreferrer" className="inline-block font-semibold text-red-700 hover:underline mt-auto">Visit Site &rarr;</a>
+        </div>
+      </div>
+      <p className="text-center text-gray-700 text-sm italic max-w-2xl mx-auto">
+        Please note: Study Juche is not officially related to any of these organizations. These links are provided for students to access resources, news, and information free from Western imperialist lies.
+      </p>
+    </div>
+  </div>
+);
+
 const ExplanatoryText = () => (
   <div className="py-16 bg-gray-50 pb-24"> {/* Added more bottom padding */}
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-gray-700">
@@ -162,6 +207,7 @@ export const Home = () => (
     <HeroBanner />
     <CoreCourses />
     <FeaturedContent />
+    <UsefulWebsites /> {/* New section added here */}
     <ExplanatoryText />
   </div>
 );

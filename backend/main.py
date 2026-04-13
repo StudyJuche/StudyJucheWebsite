@@ -6,17 +6,17 @@ from contextlib import asynccontextmanager
 from database import create_db_and_tables, get_session, engine
 from models import (
     Course, CourseLesson, User, UserRole, CourseBase, CourseLessonCreate, 
-    CourseReadWithLessons, UserCreate, UserRead, UserLessonProgress, CourseProgress
+    CourseReadWithLessons, UserCreate, UserRead, UserLessonProgress, CourseProgress, CourseRead, UserCourseProgress
 )
 import security
 import os
-from typing import List
+from typing import List, Optional
 import requests
 from dotenv import load_dotenv
 from sqlalchemy.orm import selectinload
 import feedparser
 import time
-from datetime import timedelta
+from datetime import datetime
 
 load_dotenv()
 
@@ -78,6 +78,29 @@ def register_user(user: UserCreate, session: Session = Depends(get_session)):
 async def read_users_me(current_user: User = Depends(security.get_current_user)):
     return current_user
 
+@app.get("/api/users/me/continue-learning", response_model=Optional[CourseRead], tags=["Users"])
+def get_continue_learning_course(current_user: User = Depends(security.get_current_user), session: Session = Depends(get_session)):
+    progress = session.exec(
+        select(UserCourseProgress)
+        .where(UserCourseProgress.user_id == current_user.id)
+        .where(UserCourseProgress.is_completed == False)
+        .order_by(UserCourseProgress.last_accessed_at.desc())
+    ).first()
+    if not progress:
+        return None
+    return session.get(Course, progress.course_id)
+
+@app.get("/api/users/me/overall-progress", tags=["Users"])
+def get_overall_progress(current_user: User = Depends(security.get_current_user), session: Session = Depends(get_session)):
+    total_lessons = session.exec(select(CourseLesson)).all()
+    if not total_lessons:
+        return {"total": 0, "completed": 0, "percentage": 0}
+    completed_lessons = session.exec(select(UserLessonProgress).where(UserLessonProgress.user_id == current_user.id, UserLessonProgress.is_completed == True)).all()
+    total_count = len(total_lessons)
+    completed_count = len(completed_lessons)
+    percentage = (completed_count / total_count * 100) if total_count > 0 else 0
+    return {"total": total_count, "completed": completed_count, "percentage": percentage}
+
 # --- Progress Endpoints ---
 @app.get("/api/progress/course/{course_id}", response_model=CourseProgress, tags=["Users"])
 def get_user_course_progress(course_id: int, current_user: User = Depends(security.get_current_user), session: Session = Depends(get_session)):
@@ -98,17 +121,22 @@ def get_user_course_progress(course_id: int, current_user: User = Depends(securi
 
 @app.post("/api/progress/lesson/{ghost_post_slug}/complete", tags=["Users"])
 def mark_lesson_complete(ghost_post_slug: str, current_user: User = Depends(security.get_current_user), session: Session = Depends(get_session)):
-    existing_progress = session.exec(select(UserLessonProgress).where(UserLessonProgress.user_id == current_user.id, UserLessonProgress.ghost_post_slug == ghost_post_slug)).first()
-    
-    if existing_progress:
-        if not existing_progress.is_completed:
-            existing_progress.is_completed = True
-            session.add(existing_progress)
-            session.commit()
-    else:
-        new_progress = UserLessonProgress(user_id=current_user.id, ghost_post_slug=ghost_post_slug, is_completed=True)
-        session.add(new_progress)
-        session.commit()
+    lesson = session.exec(select(CourseLesson).where(CourseLesson.ghost_post_slug == ghost_post_slug)).first()
+    if lesson:
+        course_progress = session.exec(select(UserCourseProgress).where(UserCourseProgress.user_id == current_user.id, UserCourseProgress.course_id == lesson.course_id)).first()
+        if course_progress:
+            course_progress.last_accessed_at = datetime.utcnow()
+            session.add(course_progress)
+        else:
+            new_course_progress = UserCourseProgress(user_id=current_user.id, course_id=lesson.course_id)
+            session.add(new_course_progress)
+
+    lesson_progress = session.exec(select(UserLessonProgress).where(UserLessonProgress.user_id == current_user.id, UserLessonProgress.ghost_post_slug == ghost_post_slug)).first()
+    if not lesson_progress:
+        lesson_progress = UserLessonProgress(user_id=current_user.id, ghost_post_slug=ghost_post_slug, is_completed=True)
+    lesson_progress.is_completed = True
+    session.add(lesson_progress)
+    session.commit()
     
     return {"status": "success", "message": "Lesson marked as complete"}
 

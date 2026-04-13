@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import List, Optional
 from enum import Enum
+from datetime import datetime
 
 class UserRole(str, Enum):
     admin = "admin"
@@ -77,6 +78,8 @@ class UserCourseProgress(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id")
     course_id: int = Field(foreign_key="course.id")
     is_completed: bool = Field(default=False)
+    last_accessed_at: Optional[datetime] = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow})
+    
     user: "User" = Relationship(back_populates="course_progress")
     course: "Course" = Relationship(back_populates="user_progress")
 
@@ -85,4 +88,5 @@ class UserLessonProgress(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id")
     ghost_post_slug: str
     is_completed: bool = Field(default=False)
+
     user: "User" = Relationship(back_populates="lesson_progress")

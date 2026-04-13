@@ -1,15 +1,59 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getCourses, getCourseProgress, Course, CourseProgress } from '../api/courses';
+import { getContinueLearningCourse, getOverallProgress, OverallProgress } from '../api/user';
+import { Course } from '../api/courses';
 
-interface CourseWithProgress extends Course {
-  progress?: CourseProgress;
-}
+const OverallProgressCircle = ({ percentage }: { percentage: number }) => {
+  const sqSize = 160;
+  const strokeWidth = 12;
+  const radius = (sqSize - strokeWidth) / 2;
+  const viewBox = `0 0 ${sqSize} ${sqSize}`;
+  const dashArray = radius * Math.PI * 2;
+  const dashOffset = dashArray - (dashArray * percentage) / 100;
+
+  return (
+    <div className="relative flex items-center justify-center w-40 h-40">
+      <svg width={sqSize} height={sqSize} viewBox={viewBox}>
+        <circle
+          className="text-gray-200"
+          strokeWidth={strokeWidth}
+          stroke="currentColor"
+          fill="none"
+          cx={sqSize / 2}
+          cy={sqSize / 2}
+          r={radius}
+        />
+        <circle
+          className="text-red-700"
+          strokeWidth={strokeWidth}
+          stroke="currentColor"
+          fill="none"
+          cx={sqSize / 2}
+          cy={sqSize / 2}
+          r={radius}
+          strokeLinecap="round"
+          style={{
+            strokeDasharray: dashArray,
+            strokeDashoffset: dashOffset,
+            transform: 'rotate(-90deg)',
+            transformOrigin: '50% 50%',
+            transition: 'stroke-dashoffset 1s ease-out'
+          }}
+        />
+      </svg>
+      <div className="absolute flex flex-col items-center justify-center">
+        <span className="text-3xl font-bold text-gray-900">{Math.round(percentage)}%</span>
+        <span className="text-sm text-gray-500">Complete</span>
+      </div>
+    </div>
+  );
+};
 
 export const Dashboard = () => {
   const { user, token } = useAuth();
-  const [courses, setCourses] = useState<CourseWithProgress[]>([]);
+  const [continueCourse, setContinueCourse] = useState<Course | null>(null);
+  const [overallProgress, setOverallProgress] = useState<OverallProgress | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,20 +62,12 @@ export const Dashboard = () => {
 
       try {
         setLoading(true);
-        const fetchedCourses = await getCourses();
-        
-        const coursesWithProgress = await Promise.all(
-          fetchedCourses.map(async (course) => {
-            try {
-              const progress = await getCourseProgress(course.id, token);
-              return { ...course, progress };
-            } catch (e) {
-              return { ...course, progress: undefined };
-            }
-          })
-        );
-        
-        setCourses(coursesWithProgress);
+        const [continueData, progressData] = await Promise.all([
+          getContinueLearningCourse(token),
+          getOverallProgress(token)
+        ]);
+        setContinueCourse(continueData);
+        setOverallProgress(progressData);
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
       } finally {
@@ -41,10 +77,6 @@ export const Dashboard = () => {
 
     fetchDashboardData();
   }, [token]);
-
-  const totalLessonsCompleted = courses.reduce((acc, course) => acc + (course.progress?.completed_lessons || 0), 0);
-  const totalCoursesStarted = courses.filter(c => c.progress && c.progress.completed_lessons > 0).length;
-  const totalCoursesCompleted = courses.filter(c => c.progress && c.progress.percent_complete === 100).length;
 
   if (loading) {
     return <div className="p-8 text-center pt-20">Loading Dashboard...</div>;
@@ -67,46 +99,36 @@ export const Dashboard = () => {
           </div>
         </div>
 
-        <div className="bg-white/90 backdrop-blur-sm p-8 rounded-lg shadow-lg">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Your Progress Summary</h2>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-              <div className="bg-gray-50 overflow-hidden shadow rounded-lg p-5">
-                <dt className="text-sm font-medium text-gray-500 truncate">Courses Started</dt>
-                <dd className="mt-1 text-3xl font-semibold text-gray-900">{totalCoursesStarted}</dd>
-              </div>
-              <div className="bg-gray-50 overflow-hidden shadow rounded-lg p-5">
-                <dt className="text-sm font-medium text-gray-500 truncate">Lessons Completed</dt>
-                <dd className="mt-1 text-3xl font-semibold text-gray-900">{totalLessonsCompleted}</dd>
-              </div>
-              <div className="bg-gray-50 overflow-hidden shadow rounded-lg p-5">
-                <dt className="text-sm font-medium text-gray-500 truncate">Courses Completed</dt>
-                <dd className="mt-1 text-3xl font-semibold text-gray-900">{totalCoursesCompleted}</dd>
-              </div>
-            </div>
-
-          <div className="mt-10">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Continue Learning</h2>
-            <div className="space-y-6">
-              {courses.filter(c => c.progress && c.progress.percent_complete < 100 && c.progress.completed_lessons > 0).length > 0 ? (
-                courses.filter(c => c.progress && c.progress.percent_complete < 100 && c.progress.completed_lessons > 0).map(course => (
-                  <div key={course.id} className="bg-gray-50 p-6 rounded-lg shadow">
-                    <h3 className="font-bold text-xl mb-2">{course.title}</h3>
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                      <div className="bg-red-700 h-2.5 rounded-full" style={{ width: `${course.progress?.percent_complete || 0}%` }}></div>
-                    </div>
-                    <div className="flex justify-between text-sm text-gray-600 mt-2">
-                      <span>{course.progress?.completed_lessons} of {course.progress?.total_lessons} lessons</span>
-                      <span>{Math.round(course.progress?.percent_complete || 0)}%</span>
-                    </div>
-                    <Link to={`/courses/${course.slug}`} className="inline-block mt-4 bg-red-100 text-red-800 font-semibold px-4 py-2 rounded-md hover:bg-red-200">
-                      Continue Course
-                    </Link>
-                  </div>
-                ))
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content: Continue Learning */}
+          <div className="lg:col-span-2">
+            <div className="bg-white/90 backdrop-blur-sm p-8 rounded-lg shadow-lg">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">Continue Learning</h2>
+              {continueCourse ? (
+                <div className="bg-gray-50 p-6 rounded-lg shadow">
+                  <h3 className="font-bold text-xl mb-2">{continueCourse.title}</h3>
+                  <p className="text-gray-600 mb-4">{continueCourse.description}</p>
+                  <Link to={`/courses/${continueCourse.slug}`} className="inline-block mt-4 bg-red-100 text-red-800 font-semibold px-4 py-2 rounded-md hover:bg-red-200">
+                    Jump Back In
+                  </Link>
+                </div>
               ) : (
                 <div className="bg-gray-50 p-6 rounded-lg shadow text-center">
                   <p className="text-gray-600">You haven't started any courses yet. Why not start one now?</p>
                 </div>
+              )}
+            </div>
+          </div>
+
+          {/* Sidebar: Overall Progress */}
+          <div className="lg:col-span-1">
+            <div className="bg-white/90 backdrop-blur-sm p-8 rounded-lg shadow-lg flex flex-col items-center">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">Overall Progress</h2>
+              {overallProgress && (
+                <>
+                  <OverallProgressCircle percentage={overallProgress.percentage} />
+                  <p className="mt-4 text-gray-600">You've completed {overallProgress.completed} of {overallProgress.total} total lessons.</p>
+                </>
               )}
             </div>
           </div>

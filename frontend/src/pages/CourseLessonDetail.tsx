@@ -4,6 +4,7 @@ import { getCourseDetails, markLessonComplete, Course, CourseLesson } from '../a
 import { getPostBySlug, GhostPost } from '../api/ghost';
 import { useAuth } from '../context/AuthContext';
 import { UnknownPage } from './UnknownPage';
+import { Notification } from '../components/Notification';
 
 export const CourseLessonDetail = () => {
   const { courseSlug, lessonSlug } = useParams<{ courseSlug: string, lessonSlug: string }>();
@@ -16,6 +17,7 @@ export const CourseLessonDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [markingComplete, setMarkingComplete] = useState(false);
+  const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     const fetchLessonData = async () => {
@@ -59,7 +61,7 @@ export const CourseLessonDetail = () => {
           }
       } catch (err) {
           console.error("Failed to mark complete", err);
-          alert("Failed to save progress. Please try again.");
+          setNotification({ message: 'Failed to save progress. Please try again.', type: 'error' });
       } finally {
           setMarkingComplete(false);
       }
@@ -82,6 +84,7 @@ export const CourseLessonDetail = () => {
 
   return (
     <div className="pt-20 pb-20 bg-site-tile bg-repeat bg-auto min-h-screen">
+      {notification && <Notification message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
       <div className={`max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden mt-12`}>
         <div className="p-8 md:p-12">
           <div className="mb-8 pb-8 border-b border-gray-200">

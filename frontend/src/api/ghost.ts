@@ -8,7 +8,7 @@ export interface GhostPost {
   published_at?: string; // Make optional as it's not always fetched
 }
 
-const GHOST_URL = import.meta.env.VITE_GHOST_URL || "http://localhost:2368";
+const GHOST_URL = import.meta.env.VITE_GHOST_URL || "https://ghost.study-juche.com";
 const GHOST_CONTENT_KEY = import.meta.env.VITE_GHOST_CONTENT_KEY || "";
 
 // Public API to fetch non-lesson posts

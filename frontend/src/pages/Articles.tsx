@@ -81,7 +81,7 @@ export const Articles = () => {
                   </p>
               )}
               <div className="text-sm text-gray-500">
-                  Published on {new Date(post.published_at).toLocaleDateString()}
+                  Published on {post.published_at ? new Date(post.published_at).toLocaleDateString() : 'Unknown Date'}
               </div>
             </div>
           </Link>

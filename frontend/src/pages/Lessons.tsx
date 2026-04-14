@@ -80,7 +80,7 @@ export const Lessons = () => {
                   </p>
               )}
               <div className="mt-4 text-sm text-gray-500">
-                  {new Date(post.published_at).toLocaleDateString()}
+                  {post.published_at ? new Date(post.published_at).toLocaleDateString() : 'Unknown Date'}
               </div>
             </div>
           </Link>

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { UserRead, UserCreate } from '../api/auth'; // We'll create this auth.ts next
 import { loginUser, registerUser, fetchCurrentUser } from '../api/auth'; // Functions to interact with backend
 
@@ -8,7 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (username: string, password: string) => Promise<void>;
-  register: (userData: UserCreate) => Promise<void>;
+  register: (userData: UserCreate) => Promise<UserRead>;
   logout: () => void;
   hasRole: (role: 'admin' | 'moderator' | 'student') => boolean;
 }

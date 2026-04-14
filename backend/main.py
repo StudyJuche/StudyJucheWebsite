@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile, Form
+from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile, Form, Query
+from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session, select
@@ -11,6 +12,7 @@ from models import (
 )
 import security
 import os
+import resend
 import shutil
 from typing import List, Optional
 import requests
@@ -22,6 +24,9 @@ import time
 from datetime import datetime
 
 load_dotenv()
+
+FRONTEND_URL = os.getenv("FRONTEND_URL")
+BACKEND_URL = os.getenv("BACKEND_URL")
 
 def create_admin_user(session: Session):
     admin_username = os.getenv("ADMIN_USERNAME", "admin")
@@ -40,10 +45,17 @@ def create_admin_user(session: Session):
         )
         session.add(admin_user)
         session.commit()
-        print("Admin user created with argon2 hash.")
+        print("Admin user created.")
+    elif not user.is_verified:
+        user.is_verified = True
+        session.add(user)
+        session.commit()
+        print("Admin user found and marked as verified.")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    if not FRONTEND_URL or not BACKEND_URL:
+        raise RuntimeError("FATAL: FRONTEND_URL and BACKEND_URL must be set in the environment.")
     os.makedirs("static/images/courses", exist_ok=True)
     create_db_and_tables()
     with Session(engine) as session:
@@ -55,26 +67,90 @@ app = FastAPI(lifespan=lifespan)
 # --- Static Files & Basic Routes ---
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+@app.get("/api/test-email")
+async def test_email_sending():
+    resend.api_key = os.environ["RESEND_API_KEY"]
+    params: resend.Emails.SendParams = {
+        "from": "Study Juche <no-reply@juche.study>",
+        "to": ["delivered@resend.dev"],
+        "subject": "hello world",
+        "html": "<strong>it works!</strong>",
+    }
+    email = resend.Emails.send(params)
+    print(email)
 # --- Authentication Endpoints ---
 @app.post("/token", tags=["Authentication"])
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), session: Session = Depends(get_session)):
     user = session.exec(select(User).where(User.username == form_data.username)).first()
     if not user or not security.verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password")
+    if not user.is_verified:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Please verify your email before logging in.")
     access_token = security.create_access_token(data={"sub": user.username, "role": user.role.value})
     return {"access_token": access_token, "token_type": "bearer"}
 
-@app.post("/register", response_model=UserRead, tags=["Authentication"])
+@app.post("/register", status_code=status.HTTP_201_CREATED, tags=["Authentication"])
 def register_user(user: UserCreate, session: Session = Depends(get_session)):
+    # Validate password against requirements
+    security.validate_password(user.password)
+
     existing_user = session.exec(select(User).where((User.username == user.username) | (User.email == user.email))).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Username or email already registered")
+
     hashed_password = security.get_password_hash(user.password)
-    new_user = User(username=user.username, email=user.email, hashed_password=hashed_password)
+    new_user = User(
+        username=user.username,
+        email=user.email,
+        hashed_password=hashed_password,
+        is_verified=False
+    )
     session.add(new_user)
     session.commit()
     session.refresh(new_user)
-    return new_user
+
+    try:
+        resend.api_key = os.environ["RESEND_API_KEY"]
+        token = security.create_verification_token(user.email)
+        verification_url = f"{BACKEND_URL}/verify-email?token={token}"
+        
+        params: resend.Emails.SendParams = {
+            "from": "Study Juche <no-reply@juche.study>",
+            "to": [user.email],
+            "subject": "Verify Your Email Address",
+            "html": f"<p>Hi {user.username},</p>"
+                    f"<p>Thanks for registering for Study Juche. Please click the link below to verify your email address:</p>"
+                    f'<p><a href="{verification_url}">Verify Email</a></p>'
+                    f"<p>If you did not register for this account, you can ignore this email.</p>"
+        }
+        resend.Emails.send(params)
+    except Exception as e:
+        print(f"Error sending verification email: {e}")
+        session.delete(new_user)
+        session.commit()
+        raise HTTPException(status_code=500, detail="Failed to send verification email. Please try again later.")
+
+    return {"message": "Registration successful. Please check your email to verify your account."}
+
+@app.get("/verify-email", tags=["Authentication"], include_in_schema=False)
+def verify_email(token: str = Query(...), session: Session = Depends(get_session)):
+    email = security.verify_verification_token(token)
+    if not email:
+        # Redirect to a new frontend page indicating the token is invalid
+        return RedirectResponse(url=f"{FRONTEND_URL}/email-verification-failed")
+
+    user = session.exec(select(User).where(User.email == email)).first()
+    if not user:
+        # This case is unlikely if the token is valid, but good to handle
+        return RedirectResponse(url=f"{FRONTEND_URL}/email-verification-failed")
+
+    if not user.is_verified:
+        user.is_verified = True
+        session.add(user)
+        session.commit()
+
+    # Redirect to a new confirmation page
+    return RedirectResponse(url=f"{FRONTEND_URL}/email-verified")
 
 # --- User Endpoints ---
 @app.get("/users/me", response_model=UserRead, tags=["Users"])
@@ -90,6 +166,9 @@ def change_user_password(
     if not security.verify_password(password_change.current_password, current_user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect current password")
     
+    # Validate new password against requirements
+    security.validate_password(password_change.new_password)
+
     if password_change.current_password == password_change.new_password:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="New password cannot be the same as the current password")
 
@@ -255,12 +334,31 @@ def mark_lesson_complete(ghost_post_slug: str, current_user: User = Depends(secu
 @app.get("/api/ghost/posts", tags=["Admin"])
 def get_ghost_posts_for_admin(user: User = Depends(security.require_moderator)):
     GHOST_URL, GHOST_CONTENT_KEY = os.getenv("VITE_GHOST_URL"), os.getenv("VITE_GHOST_CONTENT_KEY")
-    if not GHOST_URL or not GHOST_CONTENT_KEY: raise HTTPException(status_code=500, detail="Ghost env vars not set.")
+    if not GHOST_URL or not GHOST_CONTENT_KEY: 
+        raise HTTPException(status_code=500, detail="Ghost env vars not set.")
+    
     try:
-        res = requests.get(f"{GHOST_URL}/ghost/api/content/posts/?key={GHOST_CONTENT_KEY}&limit=all&fields=id,title,slug&filter=tag:hash-lesson")
+        headers = {'Accept-Version': 'v5.0'}
+        # Fetching hash-lesson and lesson tags
+        params = {
+            "key": GHOST_CONTENT_KEY,
+            "limit": "all",
+            "fields": "id,title,slug",
+            "filter": "tag:[hash-lesson,lesson]" # Correct format for Ghost filtering multiple tags
+        }
+        
+        # We fetch locally from ghost container in production so it isn't blocked by CORS or internal network issues
+        # if the URL is set to https://ghost.juche.study, requests from the backend might fail if it doesn't resolve to the container
+        # Let's try to fetch using the VITE_GHOST_URL first.
+        
+        res = requests.get(f"{GHOST_URL}/ghost/api/content/posts/", params=params, headers=headers)
         res.raise_for_status()
         return res.json().get("posts", [])
-    except requests.exceptions.RequestException as e: raise HTTPException(status_code=500, detail=f"Failed to fetch from Ghost: {e}")
+    except requests.exceptions.RequestException as e:
+        error_detail = f"Failed to fetch from Ghost: {e}"
+        if hasattr(e, 'response') and e.response is not None:
+            error_detail += f" | Body: {e.response.text}"
+        raise HTTPException(status_code=500, detail=error_detail)
 
 @app.post("/api/courses", response_model=Course, tags=["Admin"])
 def create_course(title: str = Form(...), description: str = Form(...), slug: str = Form(...), file: UploadFile = File(...), session: Session = Depends(get_session), user: User = Depends(security.require_moderator)):

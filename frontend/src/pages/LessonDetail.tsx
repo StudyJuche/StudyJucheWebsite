@@ -72,7 +72,7 @@ export const LessonDetail = () => {
                 {post.title}
             </h1>
             <div className="text-gray-500 text-sm flex items-center space-x-4">
-                <span>Published {new Date(post.published_at).toLocaleDateString()}</span>
+                <span>Published {post.published_at ? new Date(post.published_at).toLocaleDateString() : 'Unknown Date'}</span>
             </div>
         </div>
 
@@ -83,7 +83,7 @@ export const LessonDetail = () => {
             prose-headings:text-[#8B0000] prose-headings:font-bold 
             prose-a:text-red-600 hover:prose-a:text-red-800 
             prose-img:rounded-lg prose-img:shadow-md"
-          dangerouslySetInnerHTML={{ __html: post.html }} 
+          dangerouslySetInnerHTML={{ __html: post.html || '' }}
         />
       </div>
     </div>

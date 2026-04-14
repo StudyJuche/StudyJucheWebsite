@@ -12,8 +12,10 @@ import { CourseDetail } from "./pages/CourseDetail.tsx";
 import { CourseLessonDetail } from "./pages/CourseLessonDetail.tsx";
 import { AdminDashboard } from "./pages/AdminDashboard.tsx";
 import { Page } from "./pages/Page.tsx";
-import { SearchResults } from './pages/SearchResults.tsx'; // Import new component
-import { UserSettings } from './pages/UserSettings.tsx'; // Import UserSettings component
+import { SearchResults } from './pages/SearchResults.tsx';
+import { UserSettings } from './pages/UserSettings.tsx';
+import { EmailVerified } from './pages/EmailVerified.tsx';
+import { EmailVerificationFailed } from './pages/EmailVerificationFailed.tsx';
 
 const ProtectedRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -34,8 +36,10 @@ export const AppRoutes = () => {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/email-verified" element={<EmailVerified />} />
+      <Route path="/email-verification-failed" element={<EmailVerificationFailed />} />
       <Route path="/404" element={<UnknownPage />} />
-      <Route path="/search" element={<SearchResults />} /> {/* Add search route */}
+      <Route path="/search" element={<SearchResults />} />
       <Route path="/articles" element={<Articles />} />
       <Route path="/articles/:slug" element={<ArticleDetail />} />
       <Route path="/courses" element={<Courses />} />
@@ -45,7 +49,7 @@ export const AppRoutes = () => {
       {/* Protected Routes */}
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/settings" element={<UserSettings />} /> {/* Add User Settings route */}
+        <Route path="/settings" element={<UserSettings />} />
       </Route>
 
       {/* Admin & Moderator Routes */}

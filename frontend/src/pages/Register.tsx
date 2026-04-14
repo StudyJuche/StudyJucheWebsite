@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import logo from '../assets/images/studyjuche - logo - 250h.png';
 
@@ -10,7 +10,6 @@ export const Register = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const { register } = useAuth();
-  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,10 +17,11 @@ export const Register = () => {
     setSuccess(null);
     try {
       await register({ username, email, password });
-      setSuccess('Registration successful! Please log in.');
-      setTimeout(() => navigate('/login'), 2000); // Redirect to login after 2 seconds
+      setSuccess('Registration successful! Please check your email to verify your account.');
     } catch (err: any) {
-      setError(err.message || 'An error occurred during registration.');
+      // Assuming the backend sends error messages in err.message or err.response.data.detail
+      const errorMessage = err.message || err.response?.data?.detail || 'An error occurred during registration.';
+      setError(errorMessage);
     }
   };
 
@@ -98,6 +98,9 @@ export const Register = () => {
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
                 />
               </div>
+              <p className="mt-2 text-sm text-gray-500">
+                Password must be 8-80 characters long and contain at least one special character.
+              </p>
             </div>
 
             <div>

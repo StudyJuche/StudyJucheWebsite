@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getCourses, createCourse, addLessonToCourse, deleteCourse, deleteLesson, Course, CourseLessonCreate } from '../api/courses';
+import { getCourses, createCourse, addLessonToCourse, deleteCourse, deleteLesson, Course } from '../api/courses';
 import { getGhostPosts } from '../api/ghost';
 import { Notification } from '../components/Notification';
 import { ConfirmationDialog } from '../components/ConfirmationDialog';
@@ -75,7 +75,7 @@ const CourseManager = ({ course, ghostPosts, onDataChange, setNotification, toke
     <>
       {confirmation && (
         <ConfirmationDialog
-          isOpen={!!confirmation}
+          show={!!confirmation}
           title={confirmation.title}
           message={confirmation.message}
           onConfirm={confirmation.onConfirm}
@@ -107,7 +107,7 @@ const CourseManager = ({ course, ghostPosts, onDataChange, setNotification, toke
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <label htmlFor={`select-ghost-post-${course.id}`} className="block text-sm font-medium text-gray-700">Select Ghost Post</label>
-                  <a href="http://localhost:2368/ghost/posts" target="_blank" rel="noopener noreferrer" className="text-xs text-red-600 hover:underline">
+                  <a href={`${import.meta.env.VITE_GHOST_URL || "https://ghost.study-juche.com"}/ghost/posts`} target="_blank" rel="noopener noreferrer" className="text-xs text-red-600 hover:underline">
                     Create New?
                   </a>
                 </div>

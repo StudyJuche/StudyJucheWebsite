@@ -1,0 +1,34 @@
+juche.study, study-juche.com {
+    route {
+        # Handle all API calls first
+        handle /api/* {
+            reverse_proxy backend:8000
+        }
+        handle /token {
+            reverse_proxy backend:8000
+        }
+        handle /register {
+            reverse_proxy backend:8000
+        }
+        handle /users/me {
+            reverse_proxy backend:8000
+        }
+        handle /verify-email { # <--- ADDED THIS LINE
+            reverse_proxy backend:8000
+        }
+
+        # Handle static file requests
+        handle /static/* {
+            reverse_proxy backend:8000
+        }
+
+        # As a fallback, handle all other requests
+        handle {
+            reverse_proxy frontend:8081
+        }
+    }
+}
+
+ghost.juche.study, ghost.study-juche.com {
+    reverse_proxy ghost:2368
+}

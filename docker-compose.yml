@@ -3,10 +3,8 @@ services:
     build:
       context: ./backend
     volumes:
-      - ./backend:/app
-      - ./static:/app/static
-    environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/dbname
+      - static_data:/app/static
+    # env_file is removed; Docker Compose will use the root .env file by default
     depends_on:
       db:
         condition: service_healthy
@@ -14,6 +12,15 @@ services:
   frontend:
     build:
       context: ./frontend
+      # These args will be populated by the root .env file
+      args:
+        - VITE_GHOST_URL=${VITE_GHOST_URL}
+        - VITE_GHOST_CONTENT_KEY=${VITE_GHOST_CONTENT_KEY}
+        - VITE_MONERO_ADDRESS=${VITE_MONERO_ADDRESS}
+        - VITE_YOUTUBE_URL=${VITE_YOUTUBE_URL}
+        - VITE_TWITTER_URL=${VITE_TWITTER_URL}
+        - VITE_DISCORD_URL=${VITE_DISCORD_URL}
+        - VITE_TWITCH_URL=${VITE_TWITCH_URL}
     depends_on:
       - backend
 
@@ -21,12 +28,12 @@ services:
     image: postgres:15
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=dbname
+    environment: # <--- ADDED THIS SECTION
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d dbname"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-dbname}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -37,7 +44,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./Caddyfile.prod:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
@@ -49,13 +56,11 @@ services:
     image: ghost:5-alpine
     restart: always
     environment:
-      # We use SQLite for easy development, but you might want to configure Postgres for production
       database__client: sqlite3
       database__connection__filename: content/data/ghost.db
       database__useNullAsDefault: "true"
       database__debug: "false"
-      # URL needs to match the host:port that will be accessing the CMS
-      url: https://ghost.juche.study # Change this to your production URL if applicable
+      url: https://ghost.study-juche.com
     volumes:
       - ghost_data:/var/lib/ghost/content
 
@@ -64,3 +69,4 @@ volumes:
   caddy_data:
   caddy_config:
   ghost_data:
+  static_data:

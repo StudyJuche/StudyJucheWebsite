@@ -5,6 +5,15 @@ import { Notification } from '../components/Notification';
 import { ConfirmationDialog } from '../components/ConfirmationDialog';
 import { useAuth } from '../context/AuthContext';
 
+// Define the User type directly in the file
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  is_verified: boolean;
+  role: 'admin' | 'moderator' | 'student';
+}
+
 const CourseManager = ({ course, ghostPosts, onDataChange, setNotification, token }: { course: Course, ghostPosts: any[], onDataChange: () => void, setNotification: (notification: { message: string, type: 'success' | 'error' } | null) => void, token: string }) => {
   const [selectedGhostPostSlug, setSelectedGhostPostSlug] = useState('');
   const [newLessonOrder, setNewLessonOrder] = useState('');

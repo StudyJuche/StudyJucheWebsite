@@ -11,6 +11,7 @@ import { Courses } from "./pages/Courses.tsx";
 import { CourseDetail } from "./pages/CourseDetail.tsx";
 import { CourseLessonDetail } from "./pages/CourseLessonDetail.tsx";
 import { AdminDashboard } from "./pages/AdminDashboard.tsx";
+import { ManageUsers } from './pages/ManageUsers.tsx'; // Import ManageUsers
 import { Page } from "./pages/Page.tsx";
 import { SearchResults } from './pages/SearchResults.tsx';
 import { UserSettings } from './pages/UserSettings.tsx';
@@ -23,10 +24,18 @@ const ProtectedRoute = () => {
   return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
-const AdminRoute = () => {
+// This route is for moderators and admins
+const ModeratorRoute = () => {
   const { hasRole, isLoading } = useAuth();
   if (isLoading) return <div>Loading...</div>;
   return hasRole('moderator') ? <Outlet /> : <Navigate to="/dashboard" replace />;
+};
+
+// This route is strictly for admins
+const AdminRoute = () => {
+  const { hasRole, isLoading } = useAuth();
+  if (isLoading) return <div>Loading...</div>;
+  return hasRole('admin') ? <Outlet /> : <Navigate to="/dashboard" replace />;
 };
 
 export const AppRoutes = () => {
@@ -52,9 +61,14 @@ export const AppRoutes = () => {
         <Route path="/settings" element={<UserSettings />} />
       </Route>
 
-      {/* Admin & Moderator Routes */}
-      <Route element={<AdminRoute />}>
+      {/* Moderator & Admin Routes */}
+      <Route element={<ModeratorRoute />}>
         <Route path="/admin" element={<AdminDashboard />} />
+      </Route>
+
+      {/* Admin Only Routes */}
+      <Route element={<AdminRoute />}>
+        <Route path="/manage-users" element={<ManageUsers />} />
       </Route>
 
       {/* Dynamic Page Route */}

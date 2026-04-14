@@ -394,6 +394,35 @@ def delete_lesson(lesson_id: int, session: Session = Depends(get_session), user:
     session.delete(lesson)
     session.commit()
 
+# --- Admin User Management Endpoints ---
+@app.get("/api/admin/users", response_model=List[UserRead], tags=["Admin"])
+def get_all_users(session: Session = Depends(get_session), admin_user: User = Depends(security.require_admin)):
+    """Retrieve a list of all users. Only accessible by admin users."""
+    users = session.exec(select(User)).all()
+    return users
+
+@app.patch("/api/admin/users/{user_id}/verify", response_model=UserRead, tags=["Admin"])
+def verify_user_manually(user_id: int, session: Session = Depends(get_session), admin_user: User = Depends(security.require_admin)):
+    """Manually verify a user's email. Only accessible by admin users."""
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.is_verified = True
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
+
+@app.delete("/api/admin/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Admin"])
+def delete_user_by_admin(user_id: int, session: Session = Depends(get_session), admin_user: User = Depends(security.require_admin)):
+    """Delete a user by their ID. Only accessible by admin users."""
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    session.delete(user)
+    session.commit()
+    return
+
 # --- Public Endpoints ---
 @app.get("/api/courses", response_model=List[CourseReadWithLessons], tags=["Public"])
 def get_courses(session: Session = Depends(get_session)):
